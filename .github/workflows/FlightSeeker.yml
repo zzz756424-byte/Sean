@@ -76,13 +76,14 @@ jobs:
       - name: Save results
         if: always() && steps.gate.outputs.run == 'true'
         run: |
-          git config user.name "zzz756424-byte"
+          git config user.name "Sean"
           git config user.email "265227563+zzz756424-byte@users.noreply.github.com"
           git add README.md data
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "chore: update flight prices"
+          git status --short
           for i in 1 2 3; do
-            git pull --rebase -X theirs && git push && exit 0
+            git pull --rebase --autostash -X theirs && git push && exit 0
             sleep 5
           done
           exit 1
