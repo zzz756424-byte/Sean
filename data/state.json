@@ -5,8 +5,9 @@
   "destination": "GMP",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-10T17:24:47+08:00",
-  "status": "none"
+  "checked_at": "2026-11-11T01:15:07+08:00",
+  "status": "none",
+  "error": "GoogleError: Google 回傳錯誤，重試 3 次仍失敗: no flights found; received error"
  },
  "RMQ-GMP|2027-03-20|2027-03-27|~0stop": {
   "route": "台中/台北 → 首爾",
@@ -14,7 +15,7 @@
   "destination": "GMP",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "none"
  },
  "RMQ-ICN|2027-03-20|2027-03-26|~0stop": {
@@ -23,11 +24,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 10026,
+  "fare": 10035,
   "bag_add": 0,
-  "total": 10026,
+  "total": 10035,
   "airlines": [
    "Korean Air"
   ],
@@ -36,13 +37,12 @@
   "duration_min": 165,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 3,
-  "direct_total": 10026,
+  "direct_total": 10035,
   "direct_airlines": [
    "Korean Air"
   ],
   "direct_outbound": "17:50→21:35",
-  "alert_below": 20000,
-  "notified_total": 10026,
+  "alert_below": 9493,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  },
@@ -52,11 +52,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 10026,
+  "fare": 10035,
   "bag_add": 0,
-  "total": 10026,
+  "total": 10035,
   "airlines": [
    "Korean Air"
   ],
@@ -65,13 +65,12 @@
   "duration_min": 165,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 3,
-  "direct_total": 10026,
+  "direct_total": 10035,
   "direct_airlines": [
    "Korean Air"
   ],
   "direct_outbound": "17:50→21:35",
-  "alert_below": 20000,
-  "notified_total": 10026,
+  "alert_below": 9493,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  },
@@ -81,7 +80,7 @@
   "destination": "GMP",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "none"
  },
  "TPE-GMP|2027-03-20|2027-03-27|~0stop": {
@@ -90,7 +89,7 @@
   "destination": "GMP",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "none"
  },
  "TPE-ICN|2027-03-20|2027-03-26|~0stop": {
@@ -99,11 +98,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 10123,
+  "fare": 10132,
   "bag_add": 0,
-  "total": 10123,
+  "total": 10132,
   "airlines": [
    "Korean Air"
   ],
@@ -111,14 +110,13 @@
   "outbound": "12:25→15:50",
   "duration_min": 145,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 8,
-  "direct_total": 10123,
+  "options": 5,
+  "direct_total": 10132,
   "direct_airlines": [
    "Korean Air"
   ],
   "direct_outbound": "12:25→15:50",
-  "alert_below": 20000,
-  "notified_total": 9512,
+  "alert_below": 9512,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  },
@@ -128,11 +126,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 10123,
+  "fare": 10132,
   "bag_add": 0,
-  "total": 10123,
+  "total": 10132,
   "airlines": [
    "Korean Air"
   ],
@@ -140,14 +138,13 @@
   "outbound": "12:25→15:50",
   "duration_min": 145,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 8,
-  "direct_total": 10123,
+  "options": 5,
+  "direct_total": 10132,
   "direct_airlines": [
    "Korean Air"
   ],
   "direct_outbound": "12:25→15:50",
-  "alert_below": 20000,
-  "notified_total": 9512,
+  "alert_below": 9512,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  },
@@ -157,7 +154,7 @@
   "destination": "GMP",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "none"
  },
  "RMQ-ICN|2027-03-21|2027-03-27|~0stop": {
@@ -166,11 +163,11 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 9493,
+  "fare": 9502,
   "bag_add": 0,
-  "total": 9493,
+  "total": 9502,
   "airlines": [
    "Korean Air"
   ],
@@ -179,13 +176,12 @@
   "duration_min": 165,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 3,
-  "direct_total": 9493,
+  "direct_total": 9502,
   "direct_airlines": [
    "Korean Air"
   ],
   "direct_outbound": "17:50→21:35",
-  "alert_below": 20000,
-  "notified_total": 9493,
+  "alert_below": 9493,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  },
@@ -195,7 +191,7 @@
   "destination": "GMP",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "none"
  },
  "TPE-ICN|2027-03-21|2027-03-27|~0stop": {
@@ -204,11 +200,11 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-10T17:24:47+08:00",
+  "checked_at": "2026-11-11T01:15:07+08:00",
   "status": "ok",
-  "fare": 10706,
+  "fare": 10715,
   "bag_add": 0,
-  "total": 10706,
+  "total": 10715,
   "airlines": [
    "China Airlines"
   ],
@@ -216,14 +212,13 @@
   "outbound": "15:40→19:15",
   "duration_min": 155,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 8,
-  "direct_total": 10706,
+  "options": 5,
+  "direct_total": 10715,
   "direct_airlines": [
    "China Airlines"
   ],
   "direct_outbound": "15:40→19:15",
-  "alert_below": 20000,
-  "notified_total": 9512,
+  "alert_below": 9512,
   "price_comparison": "未設定 SERPAPI_API_KEY",
   "price_insights": {}
  }
