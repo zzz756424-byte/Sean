@@ -1,0 +1,87 @@
+# ============================================================
+# FlightSeeker 搜尋設定
+# 直接在 GitHub 網頁或手機 App 編輯這個檔案、存檔即可，
+# 下一次排程執行就會套用新設定。
+# ============================================================
+
+settings:
+  currency: TWD            # 幣別
+  adults: 1                # 成人人數（價格與行李估算都會乘上人數）
+  queries_per_run: 100     # 每次執行最多查幾組「日期 × 機場」組合，太多容易被 Google 擋
+                           # 名額依各航線的 weight 分配（沒寫 = 1）
+  delay_seconds: [1.5, 2.5] # 每次查詢之間隨機等待的秒數範圍
+  notify_drop: 500         # 已通知過的組合，要再便宜這麼多（元）才會再通知一次
+
+  # 自動低價線（航線設 auto_alert: true 才會用）：
+  # 每個「出發→目的地」各自取最近 auto_alert_days 天查到價格的第 auto_alert_percentile 百分位，
+  # 低於這條線就通知。例如 10 = 比過去 90% 的價格便宜。
+  auto_alert_percentile: 10
+  auto_alert_days: 30
+  auto_alert_min_samples: 20   # 紀錄少於這個數量時，先用該航線的 alert_below
+
+  # 未含托運行李的航空公司（名稱關鍵字，不分大小寫）。
+  # 命中的航班會在票價上加 bag_estimate；其他航空公司視為已含行李。
+  budget_airlines:
+    - Peach
+    - Tigerair
+    - Jetstar
+    - Scoot
+    - Thai Lion Air
+    - Hong Kong Express
+    - ZIPAIR
+    - AirAsia
+    - T'way
+    - Jeju Air
+    - Jin Air
+    - Air Busan
+    - Eastar
+    - Spring
+    - VietJet
+    - Cebu Pacific
+    - HK Express
+
+routes:
+  - name: 台中/台北 → 首爾
+    enabled: ture               
+    origins: [RMQ, TPE]          # 出發機場（可多個）
+    destinations: [ICN, GMP]     # 目的地機場（可多個）
+    window: [2027-03-20, 2027-03-27]  # 整趟旅程（去＋回）都要落在這段期間
+    trip_days: [7, 8]               # 旅程天數（含去回當天），例如 [6, 7] 會兩種都查
+    require_full_weekend: false   # 旅程必須完整包含一個週六＋週日
+    max_stops: 0              # 最多轉機次數：0 = 只要直飛，null = 不限
+    bag_estimate: 2000           # 廉航來回加購托運行李的估算（每人，元）
+    alert_below: 20000           # 估算總價（含行李）低於這個金額就發通知
+    auto_alert: true             # 是否依各「出發→目的地」歷史價格計算低價門檻
+  # 日韓直飛（星宇 JX／長榮 BR／華航 CI／全日空 NH）
+  # destinations 寫成「出發機場: [目的地]」，只列這四家實際有直飛的航線（2026/10 實測）
+  #- name: 日韓直飛 · 228／清明連假
+  #  enabled: true
+  #  origins: [KHH, RMQ, TPE]
+  #  destinations: &jpkr_direct
+  #    KHH: [NRT, KIX, FUK, OKA, ICN]
+  #    RMQ: [NRT, OKA, CTS, PUS]
+  #    TPE: [NRT, KIX, NGO, FUK, OKA, CTS, SDJ, HIJ, KMJ, HKD, ICN, PUS]
+  #  airlines: &jpkr_airlines [JX, BR, CI, NH]
+  #  window: [2027-02-21, 2027-04-12]
+  #  must_include:                # 旅程要完整包含其中一段連假
+  #    - [2027-02-27, 2027-03-01] # 228 和平紀念日（六～一）
+  #    - [2027-04-03, 2027-04-06] # 兒童節＋清明節（六～二）
+  #  trip_days: [6]
+  #  trip_days_by_dest: &jpkr_days_by_dest  # 個別目的地另訂天數
+  #    CTS: [6, 7]                # 北海道札幌可接受 7 天
+  #  require_full_weekend: false  # 連假本身已含週末
+  #  max_stops: 0
+  #  weight: 4                    # 優先：每次分到的名額最多
+  #  auto_alert: true             # 依各航線的歷史價格自動判斷低價
+  #  alert_below: 15000           # 歷史紀錄不足時的通知門檻
+  #  alert_below_by_dest: &jpkr_alert_by_dest  # 個別目的地手動門檻（優先於自動低價線）
+  #    CTS: 20000                 # 北海道札幌（新千歲）
+  #    NRT: 14000                 # 東京成田
+  #    HND: 14000                 # 東京羽田
+  #    KIX: 14000                 # 大阪關西
+  #    FUK: 13000                 # 福岡
+  #    KMJ: 13000                 # 熊本
+  #  alert_offset_by_origin: &jpkr_offset  # 個別出發機場的手動門檻加減（不影響自動低價線）
+  #    KHH: 1000                  # 高雄出發普遍較貴，門檻 +1,000
+  #  highlight_below_by_dest: &jpkr_highlight  # 低於這個價格在 README／通知裡用 🚨 特別標示
+  #    CTS: 18000
