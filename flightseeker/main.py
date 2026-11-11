@@ -154,8 +154,8 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             #if alert_below is not None and quote.total <= alert_below:
             #    last = entry.get("notified_total")
             #    if last is None or quote.total <= last - settings.notify_drop:
-            #        entry["notified_total"] = quote.total
-                    deals.append((dict(entry), route))
+            entry["notified_total"] = quote.total
+            deals.append((dict(entry), route))
             #elif alert_below is not None:
             #    entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
         state[combo.key] = entry
