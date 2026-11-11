@@ -36,6 +36,7 @@ class Quote:
     notes: list[str] = field(default_factory=list)
     price_comparison: str = "未提供"
     price_insights: dict = field(default_factory=dict)
+    return_reference: str | None = None
 
     @property
     def total(self) -> int:
@@ -55,6 +56,7 @@ class GoogleError(Exception):
 
 
 Fetcher = Callable[[Combo, Route, Settings], Quote]
+NO_PRICE_INSIGHTS = "SerpApi 未提供歷史價格資訊"
 
 
 def is_budget(airlines: list[str], settings: Settings) -> bool:
@@ -68,6 +70,20 @@ def bag_add_for(airlines: list[str], route: Route, settings: Settings) -> int:
 
 def _hhmm(t: tuple[int, int]) -> str:
     return f"{t[0]:02d}:{t[1]:02d}"
+
+
+def _within_arrival_hours(time, hours: tuple[int | None, int | None]) -> bool:
+    earliest, latest = hours
+    if earliest is None or latest is None:
+        return True
+    arrival_minutes = time[0] * 60 + time[1]
+    return earliest * 60 <= arrival_minutes <= latest * 60
+
+
+def _flight_times(segments) -> str:
+    departure, arrival = segments[0].departure, segments[-1].arrival
+    day_shift = "+1" if tuple(arrival.date) != tuple(departure.date) else ""
+    return f"{_hhmm(departure.time)}→{_hhmm(arrival.time)}{day_shift}"
 
 
 def _connection_error(reason: object) -> str:
@@ -134,7 +150,7 @@ def serpapi_price_insights(combo: Combo, route: Route, settings: Settings) -> tu
             return "SerpApi 回傳錯誤（請查看服務後台）", {}
         insights = data.get("price_insights")
         if not isinstance(insights, dict) or not insights:
-            return "SerpApi 未提供歷史價格資訊", {}
+            return NO_PRICE_INSIGHTS, {}
         parts = []
         level = insights.get("price_level")
         if level in ("low", "typical", "high"):
@@ -167,6 +183,13 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
         get_flights,
     )
 
+    return_leg = FlightQuery(
+        date=combo.ret.isoformat(),
+        from_airport=combo.destination,
+        to_airport=combo.origin,
+        max_stops=route.max_stops,
+        airlines=route.airlines or None,
+    )
     query = create_query(
         flights=[
             FlightQuery(
@@ -176,13 +199,7 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
                 max_stops=route.max_stops,
                 airlines=route.airlines or None,
             ),
-            FlightQuery(
-                date=combo.ret.isoformat(),
-                from_airport=combo.destination,
-                to_airport=combo.origin,
-                max_stops=route.max_stops,
-                airlines=route.airlines or None,
-            ),
+            return_leg,
         ],
         trip="round-trip",
         seat="economy",
@@ -227,17 +244,15 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
         airlines = [a for a in (f.airlines or []) if a]
         if allowed and not set(airlines) <= allowed:
             continue
+        if not _within_arrival_hours(f.flights[-1].arrival.time, route.outbound_arrival_hours):
+            continue
         count += 1
-        first, last = f.flights[0], f.flights[-1]
-        day_shift = ""
-        if tuple(last.arrival.date) != tuple(first.departure.date):
-            day_shift = "+1"
         quote = Quote(
             fare=int(f.price),
             bag_add=bag_add_for(airlines, route, settings),
             airlines=airlines,
             stops=len(f.flights) - 1,
-            outbound=f"{_hhmm(first.departure.time)}→{_hhmm(last.arrival.time)}{day_shift}",
+            outbound=_flight_times(f.flights),
             duration_min=sum(int(s.duration or 0) for s in f.flights),
             url=url,
         )
@@ -249,11 +264,33 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
     if best is None:
         raise NoFlights("no priced flights in result")
     best.options = count
-    # 補充查詢失敗時仍保留已成功取得的航班報價。
+    # 回程單程查詢僅用於顯示，查詢失敗時保留來回報價。
     try:
-        best.price_comparison, best.price_insights = serpapi_price_insights(combo, route, settings)
+        return_query = create_query(
+            flights=[return_leg],
+            trip="one-way",
+            seat="economy",
+            passengers=Passengers(adults=settings.adults),
+            language="en",
+            currency=settings.currency,
+            hide_separate_and_self_transfer=True,
+        )
+        return_results = get_flights(return_query)
+        return_meta = getattr(return_results, "metadata", None)
+        return_allowed = {a.name for a in (return_meta.airlines if return_meta else [])
+                          if a.code in route.airlines}
+        cheapest_return = min(
+            (f for f in return_results
+             if f.price and f.flights
+             and (not return_allowed or {a for a in (f.airlines or []) if a} <= return_allowed)
+             and _within_arrival_hours(f.flights[-1].arrival.time, route.return_arrival_hours)),
+            key=lambda f: int(f.price),
+            default=None,
+        )
+        if cheapest_return is not None:
+            best.return_reference = _flight_times(cheapest_return.flights)
     except Exception:
-        best.price_comparison = "SerpApi 資料解析失敗"
+        best.return_reference = "查詢失敗"
     if best_direct is not None:
         best.direct_total = best_direct.total
         best.direct_airlines = best_direct.airlines
