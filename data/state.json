@@ -5,7 +5,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 10035,
   "bag_add": 0,
@@ -278,7 +278,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 10035,
   "bag_add": 0,
@@ -551,7 +551,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 10132,
   "bag_add": 0,
@@ -572,7 +572,7 @@
   "alert_below": 9512,
   "price_comparison": "正常；常態區間 5,800–9,900 TWD；歷史最低 5,845 TWD（62 筆）",
   "price_insights": {
-   "lowest_price": 6632,
+   "lowest_price": 6633,
    "price_level": "typical",
    "typical_price_range": [
     5800,
@@ -825,11 +825,10 @@
     ],
     [
      1794326400,
-     6632
+     6633
     ]
    ]
-  },
-  "error": "GoogleError: Google 回傳錯誤，重試 3 次仍失敗: no flights found; received error"
+  }
  },
  "TPE-ICN|2027-03-20|2027-03-27|~0stop": {
   "route": "台中/台北 → 首爾",
@@ -837,7 +836,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 10132,
   "bag_add": 0,
@@ -1122,7 +1121,7 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 9502,
   "bag_add": 0,
@@ -1391,7 +1390,7 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T10:22:59+08:00",
+  "checked_at": "2026-11-11T10:45:53+08:00",
   "status": "ok",
   "fare": 10715,
   "bag_add": 0,
