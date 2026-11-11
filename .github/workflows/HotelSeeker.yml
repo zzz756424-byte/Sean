@@ -1,0 +1,50 @@
+name: HotelSeeker
+
+on:
+  schedule:
+    - cron: "0 8,20 * * *"
+      timezone: "Asia/Taipei"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: hotel-history-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  seek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/hotel_history.json
+          key: hotel-history-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: hotel-history-
+      - name: Search hotel prices
+        env:
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          HOTEL_ALERTS_FILE: ${{ runner.temp }}/hotel-alerts.md
+        run: python -m flightseeker.hotels
+      - name: Notify hotel price drops
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HOTEL_ALERTS_FILE: ${{ runner.temp }}/hotel-alerts.md
+        run: |
+          if [[ -s "$HOTEL_ALERTS_FILE" ]]; then
+            gh issue create --title "飯店降價通知" --body-file "$HOTEL_ALERTS_FILE"
+          fi
+      - uses: actions/cache/save@v4
+        if: always() && hashFiles('data/hotel_history.json') != ''
+        with:
+          path: data/hotel_history.json
+          key: hotel-history-${{ github.run_id }}-${{ github.run_attempt }}
