@@ -41,6 +41,7 @@ jobs:
           HOTEL_ALERTS_FILE: ${{ runner.temp }}/hotel-alerts.md
         run: |
           if [[ -s "$HOTEL_ALERTS_FILE" ]]; then
+            printf '\ncc @%s\n' "$GITHUB_REPOSITORY_OWNER" >> "$HOTEL_ALERTS_FILE"
             gh issue create --title "飯店降價通知" --body-file "$HOTEL_ALERTS_FILE"
           fi
       - uses: actions/cache/save@v4
