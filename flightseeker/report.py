@@ -170,7 +170,8 @@ def _threshold_table(route: Route, auto: dict[tuple[str, str, str], int]) -> lis
 
 
 def build_deals(deals: list[tuple[dict, Route]], now: dt.datetime, mention: str | None,
-                version: ConfigVersion | None = None, repo: str | None = None) -> tuple[str, str]:
+                version: ConfigVersion | None = None, repo: str | None = None,
+                *, test: bool = False) -> tuple[str, str]:
     deals = sorted(deals, key=lambda d: d[0]["total"])
     special = [d for d in deals if _special(*d)]
     normal = [d for d in deals if not _special(*d)]
@@ -185,11 +186,15 @@ def build_deals(deals: list[tuple[dict, Route]], now: dt.datetime, mention: str 
         "|---|---|---|---|---|---:|---:|---:|---:|---|---|",
     ]
     body = [f"{now:%Y-%m-%d %H:%M} 查到以下組合低於通知門檻：", ""]
-    if special:
+    if test:
+        title = f"🧪 測試通知｜{len(deals)} 組機票"
+        body = [f"{now:%Y-%m-%d %H:%M} 測試通知，列出本次成功查價的組合。", "",
+                *header, *[_row(e, route, now) for e, route in deals]]
+    elif special:
         body += ["## 🚨 特別低價", "", *header, *[_row(e, route, now) for e, route in special], ""]
         if normal:
             body += ["## 其他低於門檻", ""]
-    if normal:
+    if normal and not test:
         body += [*header, *[_row(e, route, now) for e, route in normal]]
     body += ["", _version(version, repo, now.tzinfo), "", "價格隨時會變，請以 Google Flights 頁面為準。"]
     if mention:
