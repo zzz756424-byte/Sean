@@ -11,7 +11,8 @@ settings:
                            # 名額依各航線的 weight 分配（沒寫 = 1）
   delay_seconds: [1.5, 2.5] # 每次查詢之間隨機等待的秒數範圍
   notify_drop: 500         # 已通知過的組合，要再便宜這麼多（元）才會再通知一次
-
+  test_force_deals: false # true = 每筆成功查價都加入測試通知
+  
   # 自動低價線（航線設 auto_alert: true 才會用）：
   # 每個「出發→目的地」各自取最近 auto_alert_days 天查到價格的第 auto_alert_percentile 百分位，
   # 低於這條線就通知。例如 10 = 比過去 90% 的價格便宜。
