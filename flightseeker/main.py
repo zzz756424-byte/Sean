@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 from .combos import Combo, build_combos
 from .config import Config, Route, alert_threshold, auto_thresholds, config_version, load_config
-from .fetch import EmptyResult, Fetcher, NoFlights, google_fetcher
+from .fetch import NO_PRICE_INSIGHTS, EmptyResult, Fetcher, NoFlights, google_fetcher, serpapi_price_insights
 from .report import build_deals, build_readme
 from .store import append_history, history_flight_key, history_price_ranges, load_history, load_state, save_state
 
@@ -55,6 +55,28 @@ def pick_combos(combos: dict[str, Combo], state: dict[str, dict], limit: int,
             picked += q[:take]
             del q[:take]
     return picked
+
+
+def cached_price_insights(combo, route, settings, entry, now):
+    search_settings = [settings.currency, settings.adults]
+    cache = entry.get("serpapi_cache") or {}
+    if cache.get("search_settings") == search_settings:
+        checked_at = dt.datetime.fromisoformat(cache["checked_at"])
+        if dt.timedelta(0) <= now - checked_at < dt.timedelta(days=10):
+            return cache["comparison"], cache["insights"]
+
+    try:
+        comparison, insights = serpapi_price_insights(combo, route, settings)
+    except Exception:
+        return "SerpApi 資料解析失敗", {}
+    if insights or comparison == NO_PRICE_INSIGHTS:
+        entry["serpapi_cache"] = {
+            "checked_at": now.isoformat(),
+            "search_settings": search_settings,
+            "comparison": comparison,
+            "insights": insights,
+        }
+    return comparison, insights
 
 
 def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
@@ -126,6 +148,9 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
         else:
             consecutive_errors = 0
             run_info["ok"] += 1
+            if fetcher is google_fetcher:
+                quote.price_comparison, quote.price_insights = cached_price_insights(
+                    combo, route, settings, entry, now)
             entry.pop("error", None)
             entry.pop("suspect_none", None)
             entry.update({
@@ -143,7 +168,12 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             history_text = (f"{previous_range[0]:,}～{previous_range[1]:,} {settings.currency}"
                             f"（{previous_range[2]} 筆，含行李估算）"
                             if previous_range else "無歷史紀錄")
-            print(f"  ✓ {combo.key}: {quote.total:,}（票價 {quote.fare:,} + 行李 {quote.bag_add:,}）"
+            return_time = quote.return_reference or "未查到"
+            filters = f"{combo.filters}|" if combo.filters else ""
+            print(f"  ✓ {combo.origin}-{combo.destination}|"
+                  f"{combo.depart.isoformat()} {quote.outbound}|"
+                  f"{combo.ret.isoformat()} {return_time}|"
+                  f"{filters} {quote.total:,} （票價 {quote.fare:,} + 行李 {quote.bag_add:,}）"
                   f" {'/'.join(quote.airlines)}"
                   f"｜近期價格範圍：{history_text}"
                   f"｜歷史價格比較：{quote.price_comparison}")
@@ -152,17 +182,16 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
             entry["alert_below"] = alert_below
             #if alert_below is not None and quote.total <= alert_below:
-            #    last = entry.get("notified_total")
-            #    if last is None or quote.total <= last - settings.notify_drop:
+               #if last is None or quote.total <= last - settings.notify_drop:
             entry["notified_total"] = quote.total
             deals.append((dict(entry), route))
             #elif alert_below is not None:
             #    entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
         state[combo.key] = entry
 
-    save_state(state_path, state)
-    append_history(history_path, history)
-    (root / "README.md").write_text(build_readme(config, state, totals, run_info, now, auto, version, repo), encoding="utf-8")
+    #save_state(state_path, state)
+    #append_history(history_path, history)
+    #(root / "README.md").write_text(build_readme(config, state, totals, run_info, now, auto, version, repo), encoding="utf-8")
 
     out = root / "out"
     out.mkdir(exist_ok=True)
