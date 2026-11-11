@@ -5,7 +5,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 9547,
   "bag_add": 2000,
@@ -532,7 +532,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 9547,
   "bag_add": 2000,
@@ -1059,7 +1059,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 10132,
   "bag_add": 0,
@@ -1610,7 +1610,7 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 10132,
   "bag_add": 0,
@@ -2161,7 +2161,7 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 9547,
   "bag_add": 2000,
@@ -2672,7 +2672,8 @@
      ]
     ]
    }
-  }
+  },
+  "error": "GoogleError: Google 回傳錯誤，重試 3 次仍失敗: no flights found; received error"
  },
  "TPE-ICN|2027-03-21|2027-03-27|~0stop": {
   "route": "台中/台北 → 首爾",
@@ -2680,7 +2681,7 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-11T16:18:18+08:00",
+  "checked_at": "2026-11-11T16:19:05+08:00",
   "status": "ok",
   "fare": 11684,
   "bag_add": 0,
