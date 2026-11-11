@@ -15,7 +15,7 @@ settings:
   # 自動低價線（航線設 auto_alert: true 才會用）：
   # 每個「出發→目的地」各自取最近 auto_alert_days 天查到價格的第 auto_alert_percentile 百分位，
   # 低於這條線就通知。例如 10 = 比過去 90% 的價格便宜。
-  auto_alert_percentile: 10
+  auto_alert_percentile: 0
   auto_alert_days: 30
   auto_alert_min_samples: 20   # 紀錄少於這個數量時，先用該航線的 alert_below
 
