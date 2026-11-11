@@ -145,8 +145,8 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
                             if previous_range else "無歷史紀錄")
             print(f"  ✓ {combo.key}: {quote.total:,}（票價 {quote.fare:,} + 行李 {quote.bag_add:,}）"
                   f" {'/'.join(quote.airlines)}"
-                  f"｜history.csv 同日期／去程時間／航空公司價格範圍：{history_text}"
-                  f"｜Google Flights 歷史價格比較（搜尋整體）：{quote.price_comparison}")
+                  f"｜近期價格範圍：{history_text}"
+                  f"｜歷史價格比較：{quote.price_comparison}")
 
             # 通知判斷：低於門檻，且比上次通知的價格再便宜 notify_drop 以上
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
