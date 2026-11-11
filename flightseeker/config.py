@@ -48,6 +48,8 @@ class Route:
     highlight_below_by_dest: dict[str, int] = field(default_factory=dict)  # 低於這個價格特別標示 🚨
     # 個別出發機場的手動門檻加減（例如高雄 +1000）；自動低價線本來就分出發地計算，不再加減
     alert_offset_by_origin: dict[str, int] = field(default_factory=dict)
+    outbound_arrival_hours: tuple[int | None, int | None] = (None, None)
+    return_arrival_hours: tuple[int | None, int | None] = (None, None)
 
 
 @dataclass
@@ -60,6 +62,16 @@ def _as_date(value) -> dt.date:
     if isinstance(value, dt.date):
         return value
     return dt.date.fromisoformat(str(value).strip())
+
+
+def _arrival_hours(value, key: str) -> tuple[int | None, int | None]:
+    if value is None:
+        return None, None
+    if (not isinstance(value, list) or len(value) != 2
+            or any(type(hour) is not int or not 0 <= hour <= 23 for hour in value)
+            or value[0] > value[1]):
+        raise ValueError(f"{key} 需要 [最早小時, 最晚小時]，範圍為 0–23，最早不得晚於最晚")
+    return value[0], value[1]
 
 
 def load_config(path: str | Path) -> Config:
@@ -111,6 +123,10 @@ def load_config(path: str | Path) -> Config:
                 trip_days=sorted({int(d) for d in trip_days}),
                 require_full_weekend=bool(r.get("require_full_weekend", True)),
                 max_stops=None if r.get("max_stops") is None else int(r["max_stops"]),
+                outbound_arrival_hours=_arrival_hours(
+                    r.get("outbound_arrival_hours"), f"routes[{i}].outbound_arrival_hours"),
+                return_arrival_hours=_arrival_hours(
+                    r.get("return_arrival_hours"), f"routes[{i}].return_arrival_hours"),
                 bag_estimate=int(r.get("bag_estimate", 0)),
                 alert_below=None if r.get("alert_below") is None else int(r["alert_below"]),
                 enabled=bool(r.get("enabled", True)),
