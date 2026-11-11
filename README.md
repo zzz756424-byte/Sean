@@ -1,6 +1,6 @@
 # ✈️ FlightSeeker 機票監控
 
-> 最後執行：2026-11-11 10:22（台北時間）　本次查詢 6 組：成功 5、查無航班 0、錯誤 1
+> 最後執行：2026-11-11 10:22（台北時間）　本次查詢 6 組：成功 6、查無航班 0、錯誤 0
 >
 > 搜尋條件版本：2026-11-11 10:22 修改的 routes.yaml（[5c96705](https://github.com/zzz756424-byte/Sean/commit/5c96705dddbeecaf034aeb0448ec8f04df6ec716) Update destinations for route from 台中/台北 to 首爾）
 
