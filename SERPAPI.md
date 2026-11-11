@@ -1,36 +1,21 @@
-# SerpApi 歷史價格比較
+# SerpApi 查價設定
 
-航班報價仍透過 fast-flights 取得；每組成功查價後，另外呼叫一次 SerpApi Google Flights，讀取 `price_insights`。這會使用 SerpApi 查詢額度，沒有設定金鑰時不呼叫。
+在 GitHub 儲存庫的 **Settings → Secrets and variables → Actions** 新增 `SERPAPI_API_KEY`。本機 PowerShell 可用 `$env:SERPAPI_API_KEY = '你的 API key'` 設定。金鑰只放環境變數或 GitHub Secret。
 
-## 設定
+## 機票歷史價格比較
 
-GitHub：在儲存庫 Settings → Secrets and variables → Actions 新增 repository secret，名稱為 `SERPAPI_API_KEY`，值為你的 SerpApi API key。Workflow 已接上此 secret。
+航班報價透過 fast-flights 取得。成功查價後，程式另用 SerpApi Google Flights 取得 `price_insights`，補充 Google 的價格比較。可用 `python -m flightseeker --limit 1` 試查。
 
-本機 PowerShell：
+若遇到憑證問題，先確認已執行 `python -m pip install -r requirements.txt`。公司網路使用自訂 CA 時，可設定 `SERPAPI_CA_BUNDLE` 指向經 IT 核准的 PEM 憑證。
 
-```powershell
-$env:SERPAPI_API_KEY = '你的 API key'
-python -m flightseeker --limit 1
-```
+## 指定飯店查價
 
-金鑰只放環境變數或 GitHub Secret，不放進 routes.yaml。先以一組查詢確認額度與回傳資料。
+在 `routes.yaml` 的 `hotels` 清單填寫 `name` 或 `property_token`、`check_in` 和 `check_out`。可為同一飯店設定多組日期。成人數和幣別預設沿用 `settings`，每筆可覆寫 `adults`、`currency` 或 `top`。可用 `search_name` 指定英文搜尋名稱。
 
-## 輸出與儲存
+本機執行 `python -m flightseeker.hotels`。GitHub Actions 可手動執行 **HotelSeeker**，也會在台灣時間每天 08:00、20:00 排程查價。
 
-成功查價的 console 會附上價格等級、常態價格區間，以及回傳歷史序列的最低價與筆數（欄位存在時）。沒有資訊或 API 失敗時顯示原因，保留原本航班報價。
+`providers: [Agoda, Booking.com]` 會篩選 SerpApi 回傳的平台，名稱不分大小寫。省略或設定空清單會顯示所有平台。結果按全程總價排序，並顯示每晚價格、稅費標示和訂房連結。可用 `hotels_com_tw_url` 指定 Hotels.com 台灣站的住宿頁。
 
-完整 `price_insights` 儲存在 `data/state.json` 各組合內，包含 `price_history` 的 Unix timestamp／價格配對。每次成功查價會更新該組合的快照；不會把外部歷史序列寫入自行累積的 `data/history.csv`。
+程式將各平台的最低全程總價寫入 `data/hotel_history.json`，並顯示相同查詢條件和稅費口徑下前 30 天的最低價、最高價及筆數。GitHub Actions 透過快取延續紀錄。若 Google Hotels 提供常態價格區間，也會顯示。
 
-請求會帶入機場、去回日期、成人數、經濟艙、幣別、航空公司與轉機限制。比較資訊屬於 Google 搜尋整體，不保證是特定航班的歷史；也未加上程式估算的行李費。歷史涵蓋範圍由 Google／SerpApi 決定，缺值不代表沒有歷史報價。現有通知門檻算法不變。
-
-文件：https://serpapi.com/google-flights-price-insights
-
-## SSL 憑證驗證失敗
-
-SerpApi 連線使用 truststore 讀取系統憑證庫，仍驗證憑證及主機名稱。請先在 PyCharm 專案使用的 Python 環境安裝更新後的套件：
-
-```powershell
-python -m pip install -r requirements.txt
-```
-
-若仍失敗且在公司網路，請向 IT 取得核准的根／中繼 CA 憑證（PEM 格式），在 PyCharm Run → Edit Configurations → Environment variables 新增 `SERPAPI_CA_BUNDLE`，值為憑證檔案的完整路徑（不加引號）。該憑證會加入系統信任來源。不要使用停用 SSL 驗證的方式。
+`notify_drop: 500` 表示本次全程總價比前 30 天最低價至少低 500（以查詢幣別計）才通知。`notify_drop: null` 表示追平或低於前 30 天最低價就通知。首次查價只建立紀錄。符合門檻時，終端會在輸出最後列出通知，GitHub Actions 會建立 Issue。省略欄位可停用。
