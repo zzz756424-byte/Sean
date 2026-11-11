@@ -181,27 +181,34 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             # 通知判斷：低於門檻，且比上次通知的價格再便宜 notify_drop 以上
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
             entry["alert_below"] = alert_below
-            #if alert_below is not None and quote.total <= alert_below:
-               #if last is None or quote.total <= last - settings.notify_drop:
-            entry["notified_total"] = quote.total
-            deals.append((dict(entry), route))
-            #elif alert_below is not None:
-            #    entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
+            if settings.test_force_deals:
+                deals.append((dict(entry), route))
+            elif alert_below is not None and quote.total <= alert_below:
+                last = entry.get("notified_total")
+                if last is None or quote.total <= last - settings.notify_drop:
+                    entry["notified_total"] = quote.total
+                    deals.append((dict(entry), route))
+            elif alert_below is not None:
+                entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
         state[combo.key] = entry
 
-    #save_state(state_path, state)
-    #append_history(history_path, history)
-    #(root / "README.md").write_text(build_readme(config, state, totals, run_info, now, auto, version, repo), encoding="utf-8")
+    save_state(state_path, state)
+    append_history(history_path, history)
+    (root / "README.md").write_text(build_readme(config, state, totals, run_info, now, auto, version, repo), encoding="utf-8")
 
     out = root / "out"
     out.mkdir(exist_ok=True)
     for name in ("deals.md", "deals_title.txt"):
         (out / name).unlink(missing_ok=True)
     if deals:
-        title, body = build_deals(deals, now, os.environ.get("GITHUB_REPOSITORY_OWNER"), version, repo)
+        title, body = build_deals(deals, now, os.environ.get("GITHUB_REPOSITORY_OWNER"), version, repo,
+                                  test=settings.test_force_deals)
         (out / "deals_title.txt").write_text(title, encoding="utf-8")
         (out / "deals.md").write_text(body, encoding="utf-8")
-        print(f"🔥 {len(deals)} 組低於門檻，將發出通知")
+        if settings.test_force_deals:
+            print(f"🧪 {len(deals)} 組已加入測試通知")
+        else:
+            print(f"🔥 {len(deals)} 組低於門檻，將發出通知")
 
     print(f"完成：成功 {run_info['ok']}、查無 {run_info['none']}、錯誤 {run_info['error']}")
     if run_info["attempted"] and run_info["ok"] == 0 and run_info["none"] == 0:
