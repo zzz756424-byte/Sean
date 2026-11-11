@@ -40,6 +40,23 @@ settings:
     - VietJet
     - Cebu Pacific
     - HK Express
+    
+hotels:
+  - name: 台北君悅酒店
+    search_name: Grand Hyatt Taipei
+    notify_drop: null # 追平或低於近 30 天最低價就通知；填正整數可設定最低降幅
+    hotels_com_tw_url: https://tw.hotels.com/ho120725/tai-bei-jun-yue-jiu-dian-tai-bei-tai-wan/
+    providers: # 留空 [] 顯示全部平台
+      - Agoda
+      - Booking.com
+      - Trip.com
+      - Hotels.com
+      - ezTravel
+    # property_token: 飯店的 SerpApi token
+    check_in: 2026-12-04
+    check_out: 2026-12-06
+    adults: 2
+    top: 3
 
 routes:
   - name: 台中/台北 → 首爾
