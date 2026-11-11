@@ -1,21 +1,19 @@
 # ✈️ FlightSeeker 機票監控
 
-> 最後執行：2026-11-11 09:27（台北時間）　本次查詢 12 組：成功 6、查無航班 6、錯誤 0
+> 最後執行：2026-11-11 10:22（台北時間）　本次查詢 6 組：成功 5、查無航班 0、錯誤 1
 >
-> 搜尋條件版本：2026-11-10 17:18 修改的 routes.yaml（[8fc8c46](https://github.com/zzz756424-byte/Sean/commit/8fc8c468499a793ae3749fb5fc612cbc11532b8f) Add files via upload）
+> 搜尋條件版本：2026-11-11 10:22 修改的 routes.yaml（[5c96705](https://github.com/zzz756424-byte/Sean/commit/5c96705dddbeecaf034aeb0448ec8f04df6ec716) Update destinations for route from 台中/台北 to 首爾）
 
 ## 台中/台北 → 首爾
 
-RMQ/TPE → ICN/GMP，2027/03/20–2027/03/27，7/8 天，限直飛，低於自動低價線會通知（最近 30 天價格的第 10 百分位，紀錄不足時用 20,000）
+RMQ/TPE → ICN，2027/03/20–2027/03/27，7/8 天，限直飛，低於自動低價線會通知（最近 30 天價格的第 10 百分位，紀錄不足時用 20,000）
 
-已查過 12 / 12 組日期 × 機場組合（每次執行輪流查最久沒更新的組合）。
+已查過 6 / 6 組日期 × 機場組合（每次執行輪流查最久沒更新的組合）。
 
 <details><summary>各航線的通知門檻</summary>
 
 | 航線 | 低於多少會通知 | 來源 |
 |---|---:|---|
-| RMQ→GMP | 20,000 | 紀錄不足 |
-| TPE→GMP | 20,000 | 紀錄不足 |
 | RMQ→ICN | 9,493 | 自動 |
 | TPE→ICN | 9,512 | 自動 |
 
@@ -25,12 +23,12 @@ RMQ/TPE → ICN/GMP，2027/03/20–2027/03/27，7/8 天，限直飛，低於自�
 
 | 去 → 回 | 機場 | 航空公司 | 轉機 | 去程時間 | 票價 | 行李 | 估算總價 | 直飛最低 | 更新 | 連結 |
 |---|---|---|---|---|---:|---:|---:|---:|---|---|
-| 3/21(日) → 3/27(六) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 9,502 | 已含 | 9,502 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
-| 3/20(六) → 3/26(五) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 10,035 | 已含 | 10,035 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
-| 3/20(六) → 3/27(六) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 10,035 | 已含 | 10,035 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
-| 3/20(六) → 3/26(五) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,132 | 已含 | 10,132 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
-| 3/20(六) → 3/27(六) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,132 | 已含 | 10,132 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
-| 3/21(日) → 3/27(六) | TPE→ICN | China Airlines | 直飛 | 15:40→19:15 | 10,715 | 已含 | 10,715 | 同左 | 11/11 09:27 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/21(日) → 3/27(六) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 9,502 | 已含 | 9,502 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/26(五) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 10,035 | 已含 | 10,035 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/27(六) | RMQ→ICN | Korean Air | 直飛 | 17:50→21:35 | 10,035 | 已含 | 10,035 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/26(五) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,132 | 已含 | 10,132 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/27(六) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,132 | 已含 | 10,132 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/21(日) → 3/27(六) | TPE→ICN | China Airlines | 直飛 | 15:40→19:15 | 10,715 | 已含 | 10,715 | 同左 | 11/11 10:22 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
 
 ---
 
