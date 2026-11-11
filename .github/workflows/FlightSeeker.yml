@@ -71,6 +71,7 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         env:
           QUERY_LIMIT: ${{ inputs.limit }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
         run: python -m flightseeker
 
       - name: Save results
