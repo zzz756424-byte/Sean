@@ -44,7 +44,7 @@ routes:
   - name: 台中/台北 → 首爾
     enabled: ture               
     origins: [RMQ, TPE]          # 出發機場（可多個）
-    destinations: [ICN, GMP]     # 目的地機場（可多個）
+    destinations: [ICN]     # 目的地機場（可多個）
     window: [2027-03-20, 2027-03-27]  # 整趟旅程（去＋回）都要落在這段期間
     trip_days: [7, 8]               # 旅程天數（含去回當天），例如 [6, 7] 會兩種都查
     require_full_weekend: false   # 旅程必須完整包含一個週六＋週日
