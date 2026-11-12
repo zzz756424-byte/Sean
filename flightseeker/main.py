@@ -80,7 +80,7 @@ def cached_price_insights(combo, route, settings, entry, now):
 
 
 def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
-        now: dt.datetime | None = None, sleep=time.sleep) -> int:
+        now: dt.datetime | None = None, sleep=time.sleep, *, test_force_deals: bool = False) -> int:
     now = now or dt.datetime.now(TZ).replace(microsecond=0)
     config: Config = load_config(root / "routes.yaml")
     version = config_version(root / "routes.yaml")
@@ -181,7 +181,7 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             # 通知判斷：低於門檻，且比上次通知的價格再便宜 notify_drop 以上
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
             entry["alert_below"] = alert_below
-            if settings.test_force_deals:
+            if test_force_deals:
                 deals.append((dict(entry), route))
             elif alert_below is not None and quote.total <= alert_below:
                 last = entry.get("notified_total")
@@ -202,10 +202,10 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
         (out / name).unlink(missing_ok=True)
     if deals:
         title, body = build_deals(deals, now, os.environ.get("GITHUB_REPOSITORY_OWNER"), version, repo,
-                                  test=settings.test_force_deals)
+                                  test=test_force_deals)
         (out / "deals_title.txt").write_text(title, encoding="utf-8")
         (out / "deals.md").write_text(body, encoding="utf-8")
-        if settings.test_force_deals:
+        if test_force_deals:
             print(f"🧪 {len(deals)} 組已加入測試通知")
         else:
             print(f"🔥 {len(deals)} 組低於門檻，將發出通知")
@@ -223,7 +223,8 @@ def main() -> None:
     args = parser.parse_args()
     env_limit = os.environ.get("QUERY_LIMIT", "").strip()
     limit = args.limit if args.limit is not None else (int(env_limit) if env_limit else None)
-    sys.exit(run(Path(args.root), limit=limit))
+    test_force_deals = os.environ.get("TEST_FORCE_DEALS", "").strip().lower() == "true"
+    sys.exit(run(Path(args.root), limit=limit, test_force_deals=test_force_deals))
 
 
 if __name__ == "__main__":
