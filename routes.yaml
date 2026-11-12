@@ -41,8 +41,9 @@ settings:
     - Cebu Pacific
     - HK Express
     
-hotels: []
+hotels:
   - name: 台北君悅酒店
+    enabled: false  
     search_name: Grand Hyatt Taipei
     notify_drop: null # 追平或低於近 30 天最低價就通知；填正整數可設定最低降幅
     hotels_com_tw_url: https://tw.hotels.com/ho120725/tai-bei-jun-yue-jiu-dian-tai-bei-tai-wan/
