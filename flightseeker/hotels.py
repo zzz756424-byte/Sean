@@ -164,6 +164,11 @@ def load_searches(path):
     searches = []
     for index, entry in enumerate(entries, 1):
         try:
+            enabled = entry.get("enabled", True)
+            if type(enabled) is not bool:
+                raise ValueError("enabled 必須是 true 或 false")
+            if not enabled:
+                continue
             hotel = entry.get("name")
             token = entry.get("property_token")
             search_name = entry.get("search_name")
