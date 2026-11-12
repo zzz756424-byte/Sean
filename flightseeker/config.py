@@ -21,7 +21,6 @@ class Settings:
     auto_alert_days: int = 30         # 只看最近幾天的查價紀錄
     auto_alert_min_samples: int = 20  # 紀錄少於這個數量時，改用 alert_below
     budget_airlines: list[str] = field(default_factory=list)
-    test_force_deals: bool = False
 
 
 @dataclass
@@ -88,7 +87,6 @@ def load_config(path: str | Path) -> Config:
         queries_per_run=int(s.get("queries_per_run", 50)),
         delay_seconds=(float(delay[0]), float(delay[1])),
         notify_drop=int(s.get("notify_drop", 500)),
-        test_force_deals=s.get("test_force_deals") is True,
         auto_alert_percentile=int(s.get("auto_alert_percentile", 10)),
         auto_alert_days=int(s.get("auto_alert_days", 30)),
         auto_alert_min_samples=int(s.get("auto_alert_min_samples", 20)),
