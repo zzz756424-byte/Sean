@@ -233,9 +233,10 @@ def main():
                if any(row[0] >= cutoff for row in value["prices"])}
     all_found = True
     alerts = []
+    line_alerts = []
     for search in searches:
         try:
-            if not run_search(search, key, context, history, now, alerts):
+            if not run_search(search, key, context, history, now, alerts, line_alerts):
                 all_found = False
         except ValueError as exc:
             print(f"{search.hotel or search.property_token}：{exc}")
@@ -245,6 +246,10 @@ def main():
     alerts_file = os.environ.get("HOTEL_ALERTS_FILE")
     if alerts_file and alerts:
         Path(alerts_file).write_text("\n".join(alerts) + "\n", encoding="utf-8")
+    line_file = os.environ.get("HOTEL_LINE_ALERTS_FILE")
+    if line_file and line_alerts:
+        Path(line_file).write_text("\n\n".join(line_alerts) + "\n", encoding="utf-8")
+        print(f"已準備 LINE 推播，共 {len(line_alerts)} 組飯店與入住日期")
     if alerts:
         print(f"\n🔔 降價通知：共 {len(alerts)} 筆")
         print("\n".join(alerts))
@@ -252,7 +257,7 @@ def main():
         raise SystemExit(1)
 
 
-def run_search(args, key, context, history, now, alerts):
+def run_search(args, key, context, history, now, alerts, line_alerts):
     nights = (args.check_out - args.check_in).days
     params = dict(check_in_date=args.check_in.isoformat(), check_out_date=args.check_out.isoformat(),
                   adults=args.adults, currency=args.currency, gl="tw", hl="zh-tw")
@@ -301,17 +306,33 @@ def run_search(args, key, context, history, now, alerts):
         lines.append(f"| {index} | {total_text} | {nightly_text} | {source} | {price_history} | {booking} |")
     if args.notify_drop is not None:
         seen = set()
+        line_rows = []
         for total, taxes, _, source, _ in ranked:
             group = (source.strip().casefold(), taxes)
             if group in seen:
                 continue
             seen.add(group)
             past = recent.get(group)
-            if past and past[0] - total >= args.notify_drop:
+            if not past:
+                print(f"通知判斷｜{source}（{taxes}）：沒有可比較的近 {RECENT_PRICE_DAYS} 天紀錄")
+            elif past[0] - total < args.notify_drop:
+                print(f"通知判斷｜{source}（{taxes}）：本次 {total:,}，前 {RECENT_PRICE_DAYS} 天最低 "
+                      f"{past[0]:,}，需低至少 {args.notify_drop:,} {args.currency}，未達門檻")
+            else:
                 message = (f"{details['name']}｜{args.check_in} → {args.check_out}｜"
                            f"{args.adults} 位成人｜{source}（{taxes}）｜全程總價 {total:,} {args.currency}，"
                            f"比近 {RECENT_PRICE_DAYS} 天最低價 {past[0]:,} 低 {past[0] - total:,}")
                 alerts.append(f"- {message}")
+                low, high, count = past
+                line_rows.append(
+                    f"{source}（{taxes}）｜全程總價 {total:,} {args.currency}\n"
+                    f"近 {RECENT_PRICE_DAYS} 天：{low:,}–{high:,} {args.currency}（{count} 筆）"
+                )
+        if line_rows:
+            heading = f"{details['name']}｜{args.check_in} → {args.check_out}"
+            line_alerts.append(heading + "\n\n" + "\n\n".join(line_rows))
+    else:
+        print("通知判斷｜未設定 notify_drop")
     if not quotes:
         message = "查無附全程總價的訂房平台報價"
         if args.providers:
