@@ -2,9 +2,8 @@ name: FlightSeeker
 
 on:
   schedule:
-    # GitHub 的排程常被延後或跳過，所以每小時都排一次，再由下面的 gate 步驟決定要不要真的查價：
-    # 距離上次查價不到 MIN_GAP_HOURS 就直接結束（只花幾秒）。要改查價間隔，改 MIN_GAP_HOURS 就好
-    - cron: "37 * * * *"
+    - cron: "0 8,12,16,20 * * *"
+      timezone: "Asia/Taipei"
   push:
     # 修改搜尋條件或程式後立刻跑一次
     branches: [main]
@@ -28,9 +27,6 @@ permissions:
   contents: write
   issues: write
 
-env:
-  MIN_GAP_HOURS: "3.5"  # 排程觸發時，距離上次查價至少要隔幾小時（手動執行、push 不受限制）
-
 concurrency:
   group: flightseeker
   cancel-in-progress: false
@@ -44,35 +40,16 @@ jobs:
         with:
           fetch-depth: 0  # 需要完整 git 紀錄，才查得到 routes.yaml 的修改時間（搜尋條件版本）
 
-      - name: Gate
-        id: gate
-        run: |
-          last=$(git log -1 --format=%ct --grep='^chore: update flight prices' || true)
-          if [ "${{ github.event_name }}" != "schedule" ] || [ -z "$last" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          age=$(( $(date +%s) - last ))
-          min=$(awk "BEGIN { print int($MIN_GAP_HOURS * 3600) }")
-          if [ "$age" -ge "$min" ]; then
-            echo "距離上次查價 $((age / 60)) 分鐘，開始查價"
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "距離上次查價 $((age / 60)) 分鐘，未滿 $MIN_GAP_HOURS 小時，略過"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/setup-python@v6
-        if: steps.gate.outputs.run == 'true'
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Install
-        if: steps.gate.outputs.run == 'true'
         run: pip install -r requirements.txt
 
       - name: Search flights
-        if: steps.gate.outputs.run == 'true'
+        id: search
         env:
           QUERY_LIMIT: ${{ inputs.limit }}
           TEST_FORCE_DEALS: ${{ inputs.test_force_deals }}
@@ -80,7 +57,7 @@ jobs:
         run: python -m flightseeker
 
       - name: Save results
-        if: always() && steps.gate.outputs.run == 'true'
+        if: always() && (steps.search.outcome == 'success' || steps.search.outcome == 'failure')
         run: |
           git config user.name "Sean"
           git config user.email "265227563+zzz756424-byte@users.noreply.github.com"
@@ -95,15 +72,15 @@ jobs:
           exit 1
 
       - name: Notify
-        if: success() && steps.gate.outputs.run == 'true' && hashFiles('out/deals.md') != ''
+        if: success() && hashFiles('out/deals.md') != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue create --title "$(cat out/deals_title.txt)" --body-file out/deals.md
 
       - name: Push flight price alerts to LINE
-        if: ${{ !cancelled() && steps.gate.outputs.run == 'true' && hashFiles('out/deals.md') != '' }}
+        if: ${{ !cancelled() && hashFiles('out/line_deals.txt') != '' }}
         env:
-          LINE_ALERTS_FILE: out/deals.md
+          LINE_ALERTS_FILE: out/line_deals.txt
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python -m flightseeker.line_push
