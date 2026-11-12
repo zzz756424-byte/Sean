@@ -41,7 +41,7 @@ settings:
     - Cebu Pacific
     - HK Express
     
-hotels:
+hotels: []
   - name: 台北君悅酒店
     search_name: Grand Hyatt Taipei
     notify_drop: null # 追平或低於近 30 天最低價就通知；填正整數可設定最低降幅
@@ -60,9 +60,24 @@ hotels:
 
 routes:
   - name: 台中/台北 → 首爾
-    enabled: ture               
+    enabled: false               
     origins: [RMQ, TPE]          # 出發機場（可多個）
     destinations: [ICN]     # 目的地機場（可多個）
+    # 抵達時段使用各段抵達機場當地時間，[最早小時, 最晚小時]，0–23，留空不限
+    outbound_arrival_hours: [8, 17]  # 去程抵達
+    return_arrival_hours: [12, 22]    # 回程抵達
+    window: [2027-03-20, 2027-03-27]  # 整趟旅程（去＋回）都要落在這段期間
+    trip_days: [7, 8]               # 旅程天數（含去回當天），例如 [6, 7] 會兩種都查
+    require_full_weekend: false   # 旅程必須完整包含一個週六＋週日
+    max_stops: 0              # 最多轉機次數：0 = 只要直飛，null = 不限
+    bag_estimate: 2000           # 廉航來回加購托運行李的估算（每人，元）
+    alert_below: 20000           # 估算總價（含行李）低於這個金額就發通知
+    auto_alert: true             # 是否依各「出發→目的地」歷史價格計算低價門檻
+    
+  - name: 台中/台北 → 沖繩
+    enabled: true               
+    origins: [RMQ]          # 出發機場（可多個）
+    destinations: [OKA]     # 目的地機場（可多個）
     # 抵達時段使用各段抵達機場當地時間，[最早小時, 最晚小時]，0–23，留空不限
     outbound_arrival_hours: [8, 17]  # 去程抵達
     return_arrival_hours: [12, 22]    # 回程抵達
