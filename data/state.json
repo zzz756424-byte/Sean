@@ -5,7 +5,7 @@
   "destination": "OKA",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-12T10:25:05+08:00",
+  "checked_at": "2026-11-12T10:30:30+08:00",
   "serpapi_cache": {
    "checked_at": "2026-11-12T10:25:05+08:00",
    "search_settings": [
@@ -485,7 +485,7 @@
   "destination": "OKA",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T10:25:05+08:00",
+  "checked_at": "2026-11-12T10:30:30+08:00",
   "status": "none"
  },
  "RMQ-OKA|2027-03-21|2027-03-27|~0stop": {
@@ -494,8 +494,7 @@
   "destination": "OKA",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T10:25:05+08:00",
-  "status": "error",
-  "error": "GoogleError: Google 回傳錯誤，重試 3 次仍失敗: no flights found; received error"
+  "checked_at": "2026-11-12T10:30:30+08:00",
+  "status": "none"
  }
 }

@@ -1,6 +1,6 @@
 # ✈️ FlightSeeker 機票監控
 
-> 最後執行：2026-11-12 10:25（台北時間）　本次查詢 3 組：成功 1、查無航班 1、錯誤 1
+> 最後執行：2026-11-12 10:30（台北時間）　本次查詢 3 組：成功 1、查無航班 2、錯誤 0
 >
 > 搜尋條件版本：2026-11-12 10:24 修改的 routes.yaml（[06f4e93](https://github.com/zzz756424-byte/Sean/commit/06f4e930e00b5fa4eb92cdc856891d04505da2e3) Update routes.yaml）
 
@@ -22,7 +22,7 @@ RMQ → OKA，2027/03/20–2027/03/27，7/8 天，限直飛，低於自動低價
 
 | 去 → 回 | 機場 | 航空公司 | 轉機 | 去程時間 | 票價 | 行李 | 估算總價 | 直飛最低 | 更新 | 連結 |
 |---|---|---|---|---|---:|---:|---:|---:|---|---|
-| 3/20(六) → 3/26(五) | RMQ→OKA | STARLUX Airlines | 直飛 | 13:15→15:45 | 12,021 | 已含 | **12,021** 🔥 | 同左 | 11/12 10:25 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDT0tBGhwSCjIwMjctMDMtMjYoAGoFEgNPS0FyBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/26(五) | RMQ→OKA | STARLUX Airlines | 直飛 | 13:15→15:45 | 12,021 | 已含 | **12,021** 🔥 | 同左 | 11/12 10:30 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDT0tBGhwSCjIwMjctMDMtMjYoAGoFEgNPS0FyBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
 
 ---
 
