@@ -204,7 +204,7 @@ def build_deals(deals: list[tuple[dict, Route]], now: dt.datetime, mention: str 
 
 def build_line_deals(deals: list[tuple[dict, Route]], now: dt.datetime, currency: str,
                      *, test: bool = False) -> str:
-    label = "🧪 機票測試通知" if test else "✈️ 機票降價通知"
+    label = "🧪 機票測試通知" if test else "✈️ 機票價格通知"
     sections = [f"{label}｜查價時間 {now:%Y-%m-%d %H:%M}"]
     for entry, _ in sorted(deals, key=lambda deal: deal[0]["total"]):
         origin, destination = entry["origin"], entry["destination"]
