@@ -94,3 +94,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh issue create --title "$(cat out/deals_title.txt)" --body-file out/deals.md
+
+      - name: Push flight price alerts to LINE
+        if: ${{ !cancelled() && steps.gate.outputs.run == 'true' && hashFiles('out/deals.md') != '' }}
+        env:
+          LINE_ALERTS_FILE: out/deals.md
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: python -m flightseeker.line_push
