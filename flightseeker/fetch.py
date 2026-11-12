@@ -6,10 +6,13 @@
 from __future__ import annotations
 
 import time
+import datetime as dt
 import json
 import os
 import socket
 import ssl
+import traceback
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -84,6 +87,20 @@ def _flight_times(segments) -> str:
     departure, arrival = segments[0].departure, segments[-1].arrival
     day_shift = "+1" if tuple(arrival.date) != tuple(departure.date) else ""
     return f"{_hhmm(departure.time)}→{_hhmm(arrival.time)}{day_shift}"
+
+
+def _empty_fast_flights_response(exc: Exception) -> bool:
+    """fast-flights 3.1.0 indexes the flight list before checking for null."""
+    if not isinstance(exc, TypeError) or exc.__traceback__ is None:
+        return False
+    trace = exc.__traceback__
+    while trace.tb_next is not None:
+        trace = trace.tb_next
+    frame = trace.tb_frame
+    if frame.f_globals.get("__name__") != "fast_flights.parser" or frame.f_code.co_name != "parse_js":
+        return False
+    payload = frame.f_locals.get("payload")
+    return isinstance(payload, list) and len(payload) > 3 and payload[3] is None
 
 
 def _connection_error(reason: object) -> str:
@@ -172,6 +189,58 @@ def serpapi_price_insights(combo: Combo, route: Route, settings: Settings) -> tu
         return _connection_error(exc), {}
     except ValueError:
         return "SerpApi 回應不是有效的 JSON（可能收到代理或驗證頁面）", {}
+
+
+def serpapi_return_reference(combo: Combo, route: Route, settings: Settings) -> str | None:
+    api_key = os.environ.get("SERPAPI_API_KEY", "").strip()
+    if not api_key:
+        print("  回程 SerpApi 補查略過：未設定 SERPAPI_API_KEY")
+        return None
+    params = {
+        "engine": "google_flights", "api_key": api_key, "type": 2,
+        "departure_id": combo.destination, "arrival_id": combo.origin,
+        "outbound_date": combo.ret.isoformat(), "adults": settings.adults,
+        "travel_class": 1, "currency": settings.currency, "hl": "en", "gl": "tw",
+    }
+    if route.max_stops in (0, 1, 2):
+        params["stops"] = route.max_stops + 1
+    if route.airlines:
+        params["include_airlines"] = ",".join(route.airlines)
+    try:
+        with urlopen("https://serpapi.com/search.json?" + urlencode(params), timeout=30,
+                     context=_serpapi_ssl_context()) as response:
+            data = json.load(response)
+        if not isinstance(data, dict) or data.get("error"):
+            print("  回程 SerpApi 補查：服務回傳錯誤")
+            return None
+    except HTTPError as exc:
+        print(f"  回程 SerpApi 補查失敗：HTTP {exc.code}")
+        return None
+    except (ImportError, OSError, ValueError) as exc:
+        print(f"  回程 SerpApi 補查失敗（{type(exc).__name__}）")
+        return None
+
+    options = []
+    for option in (data.get("best_flights") or []) + (data.get("other_flights") or []):
+        legs = option.get("flights") or []
+        price = option.get("price")
+        if not legs or type(price) not in (int, float) or price <= 0:
+            continue
+        if route.max_stops is not None and len(legs) - 1 > route.max_stops:
+            continue
+        try:
+            departure = dt.datetime.fromisoformat(legs[0]["departure_airport"]["time"])
+            arrival = dt.datetime.fromisoformat(legs[-1]["arrival_airport"]["time"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if _within_arrival_hours((arrival.hour, arrival.minute), route.return_arrival_hours):
+            shift = (arrival.date() - departure.date()).days
+            suffix = f"+{shift}" if shift > 0 else ""
+            options.append((price, f"{departure:%H:%M}→{arrival:%H:%M}{suffix}（SerpApi 單程參考）"))
+    if not options:
+        print("  回程 SerpApi 補查：查無符合條件的班次")
+        return None
+    return min(options)[1]
 
 
 def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
@@ -275,34 +344,41 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
             currency=settings.currency,
             hide_separate_and_self_transfer=True,
         )
+    except Exception as exc:
+        print(f"  回程查詢初始化失敗（{type(exc).__name__}）")
+        best.return_reference = "查詢失敗"
+    else:
         for attempt in range(1, 4):
             try:
                 return_results = get_flights(return_query)
-                break
+                return_meta = getattr(return_results, "metadata", None)
+                return_allowed = {a.name for a in (return_meta.airlines if return_meta else [])
+                                  if a.code in route.airlines}
+                cheapest_return = min(
+                    (f for f in return_results
+                     if f.price and f.flights
+                     and (not return_allowed or {a for a in (f.airlines or []) if a} <= return_allowed)
+                     and _within_arrival_hours(f.flights[-1].arrival.time, route.return_arrival_hours)),
+                    key=lambda f: int(f.price), default=None,
+                )
+                if cheapest_return is not None:
+                    best.return_reference = _flight_times(cheapest_return.flights)
+                    break
+                best.return_reference = "單程查無班次"
             except Exception as exc:
-                if attempt == 3:
-                    raise
+                if _empty_fast_flights_response(exc):
+                    best.return_reference = "單程查無班次"
+                else:
+                    frame = traceback.extract_tb(exc.__traceback__)[-1]
+                    location = f"{Path(frame.filename).name}:{frame.lineno} {frame.name}"
+                    print(f"  回程第 {attempt} 次查詢失敗（{type(exc).__name__}，{location}）")
+                    best.return_reference = "查詢失敗"
+            if attempt < 3:
                 print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}："
-                      f"第 {attempt} 次查詢失敗（{type(exc).__name__}），3 秒後重試")
+                      f"第 {attempt} 次未取得時間，3 秒後重試")
                 time.sleep(3)
-        return_meta = getattr(return_results, "metadata", None)
-        return_allowed = {a.name for a in (return_meta.airlines if return_meta else [])
-                          if a.code in route.airlines}
-        cheapest_return = min(
-            (f for f in return_results
-             if f.price and f.flights
-             and (not return_allowed or {a for a in (f.airlines or []) if a} <= return_allowed)
-             and _within_arrival_hours(f.flights[-1].arrival.time, route.return_arrival_hours)),
-            key=lambda f: int(f.price),
-            default=None,
-        )
-        if cheapest_return is not None:
-            best.return_reference = _flight_times(cheapest_return.flights)
         else:
-            print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}：查無符合條件的班次")
-    except Exception as exc:
-        print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}：查詢或解析失敗（{type(exc).__name__}）")
-        best.return_reference = "查詢失敗"
+            best.return_reference = serpapi_return_reference(combo, route, settings) or best.return_reference
     if best_direct is not None:
         best.direct_total = best_direct.total
         best.direct_airlines = best_direct.airlines
