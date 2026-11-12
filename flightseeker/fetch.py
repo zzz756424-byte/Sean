@@ -243,48 +243,28 @@ def serpapi_return_reference(combo: Combo, route: Route, settings: Settings) -> 
     return min(options)[1]
 
 
-def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
-    from fast_flights import (
-        FlightQuery,
-        FlightsNotFound,
-        Passengers,
-        create_query,
-        get_flights,
-    )
+def google_query(flights, trip, adults=1, currency="TWD"):
+    from fast_flights import Passengers, create_query
 
-    return_leg = FlightQuery(
-        date=combo.ret.isoformat(),
-        from_airport=combo.destination,
-        to_airport=combo.origin,
-        max_stops=route.max_stops,
-        airlines=route.airlines or None,
-    )
-    query = create_query(
-        flights=[
-            FlightQuery(
-                date=combo.depart.isoformat(),
-                from_airport=combo.origin,
-                to_airport=combo.destination,
-                max_stops=route.max_stops,
-                airlines=route.airlines or None,
-            ),
-            return_leg,
-        ],
-        trip="round-trip",
+    return create_query(
+        flights=flights,
+        trip=trip,
         seat="economy",
-        passengers=Passengers(adults=settings.adults),
+        passengers=Passengers(adults=adults),
         language="en",
-        currency=settings.currency,
+        currency=currency,
         hide_separate_and_self_transfer=True,
     )
-    url = query.url().replace("&hl=en", "&hl=zh-TW")
+
+
+def google_results(query):
+    from fast_flights import FlightsNotFound, get_flights
 
     google_errors = 0
     empty_retried = False
     while True:
         try:
-            results = get_flights(query)
-            break
+            return get_flights(query)
         except FlightsNotFound as exc:
             # fast-flights 把 Google 的 ErrorResponse 當成「查無航班」，但實測同一個查詢會隨機在
             # 正常結果和 ErrorResponse 之間跳動，所以是暫時性錯誤：重試，最後仍失敗就當成錯誤
@@ -299,6 +279,19 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
                 raise EmptyResult(f"empty result: {exc}") from exc
             empty_retried = True
             time.sleep(3)
+
+
+def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
+    from fast_flights import FlightQuery, get_flights
+
+    filters = {"max_stops": route.max_stops, "airlines": route.airlines or None}
+    outbound_leg = FlightQuery(date=combo.depart.isoformat(), from_airport=combo.origin,
+                               to_airport=combo.destination, **filters)
+    return_leg = FlightQuery(date=combo.ret.isoformat(), from_airport=combo.destination,
+                             to_airport=combo.origin, **filters)
+    query = google_query([outbound_leg, return_leg], "round-trip", settings.adults, settings.currency)
+    url = query.url().replace("&hl=en", "&hl=zh-TW")
+    results = google_results(query)
 
     # Google 的航空公司篩選會混入共掛班機（例如限定華航卻出現大韓），再用名稱過濾一次
     meta = getattr(results, "metadata", None)
@@ -335,15 +328,7 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
     best.options = count
     # 回程單程查詢僅用於顯示，查詢失敗時保留來回報價。
     try:
-        return_query = create_query(
-            flights=[return_leg],
-            trip="one-way",
-            seat="economy",
-            passengers=Passengers(adults=settings.adults),
-            language="en",
-            currency=settings.currency,
-            hide_separate_and_self_transfer=True,
-        )
+        return_query = google_query([return_leg], "one-way", settings.adults, settings.currency)
     except Exception as exc:
         print(f"  回程查詢初始化失敗（{type(exc).__name__}）")
         best.return_reference = "查詢失敗"
