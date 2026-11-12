@@ -61,7 +61,7 @@ hotels:
 
 routes:
   - name: 台中/台北 → 首爾
-    enabled: false               
+    enabled: true               
     origins: [RMQ, TPE]          # 出發機場（可多個）
     destinations: [ICN]     # 目的地機場（可多個）
     # 抵達時段使用各段抵達機場當地時間，[最早小時, 最晚小時]，0–23，留空不限
@@ -76,7 +76,7 @@ routes:
     auto_alert: true             # 是否依各「出發→目的地」歷史價格計算低價門檻
     
   - name: 台中/台北 → 沖繩
-    enabled: true               
+    enabled: false               
     origins: [RMQ]          # 出發機場（可多個）
     destinations: [OKA]     # 目的地機場（可多個）
     # 抵達時段使用各段抵達機場當地時間，[最早小時, 最晚小時]，0–23，留空不限
