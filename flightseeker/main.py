@@ -110,6 +110,7 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
     run_info = {"attempted": 0, "ok": 0, "none": 0, "error": 0, "stopped_early": False}
     history: list[dict] = []
     deals: list[tuple[dict, Route]] = []
+    line_deals: list[tuple[dict, Route]] = []
     consecutive_errors = 0
 
     for i, combo in enumerate(todo):
@@ -181,15 +182,20 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             # 通知判斷：低於門檻，且比上次通知的價格再便宜 notify_drop 以上
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
             entry["alert_below"] = alert_below
-            if test_force_deals:
-                deals.append((dict(entry, recent_price=history_text, return_time=return_time), route))
-            elif alert_below is not None and quote.total <= alert_below:
-                last = entry.get("notified_total")
-                if last is None or quote.total <= last - settings.notify_drop:
-                    entry["notified_total"] = quote.total
-                    deals.append((dict(entry, recent_price=history_text, return_time=return_time), route))
-            elif alert_below is not None:
-                entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
+            notify_deal = test_force_deals
+            if not test_force_deals and alert_below is not None:
+                if quote.total <= alert_below:
+                    last = entry.get("notified_total")
+                    if last is None or quote.total <= last - settings.notify_drop:
+                        entry["notified_total"] = quote.total
+                        notify_deal = True
+                else:
+                    entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
+            if notify_deal:
+                deals.append((dict(entry), route))
+            if notify_deal or not previous_range:
+                line_deals.append((dict(entry, recent_price=history_text if previous_range else "0 筆",
+                                        return_time=return_time), route))
         state[combo.key] = entry
 
     save_state(state_path, state)
@@ -205,14 +211,15 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
                                   test=test_force_deals)
         (out / "deals_title.txt").write_text(title, encoding="utf-8")
         (out / "deals.md").write_text(body, encoding="utf-8")
-        (out / "line_deals.txt").write_text(
-            build_line_deals(deals, now, settings.currency, test=test_force_deals),
-            encoding="utf-8",
-        )
         if test_force_deals:
             print(f"🧪 {len(deals)} 組已加入測試通知")
         else:
             print(f"🔥 {len(deals)} 組低於門檻，將發出通知")
+    if line_deals:
+        (out / "line_deals.txt").write_text(
+            build_line_deals(line_deals, now, settings.currency, test=test_force_deals),
+            encoding="utf-8",
+        )
 
     print(f"完成：成功 {run_info['ok']}、查無 {run_info['none']}、錯誤 {run_info['error']}")
     if run_info["attempted"] and run_info["ok"] == 0 and run_info["none"] == 0:
