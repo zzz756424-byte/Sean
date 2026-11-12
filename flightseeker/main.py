@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 from .combos import Combo, build_combos
 from .config import Config, Route, alert_threshold, auto_thresholds, config_version, load_config
 from .fetch import NO_PRICE_INSIGHTS, EmptyResult, Fetcher, NoFlights, google_fetcher, serpapi_price_insights
-from .report import build_deals, build_readme
+from .report import build_deals, build_line_deals, build_readme
 from .store import append_history, history_flight_key, history_price_ranges, load_history, load_state, save_state
 
 TZ = ZoneInfo("Asia/Taipei")
@@ -182,12 +182,12 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             alert_below = alert_threshold(route, combo.origin, combo.destination, auto)
             entry["alert_below"] = alert_below
             if test_force_deals:
-                deals.append((dict(entry), route))
+                deals.append((dict(entry, recent_price=history_text, return_time=return_time), route))
             elif alert_below is not None and quote.total <= alert_below:
                 last = entry.get("notified_total")
                 if last is None or quote.total <= last - settings.notify_drop:
                     entry["notified_total"] = quote.total
-                    deals.append((dict(entry), route))
+                    deals.append((dict(entry, recent_price=history_text, return_time=return_time), route))
             elif alert_below is not None:
                 entry.pop("notified_total", None)  # 漲回門檻以上，下次再跌破時重新通知
         state[combo.key] = entry
@@ -198,13 +198,17 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
 
     out = root / "out"
     out.mkdir(exist_ok=True)
-    for name in ("deals.md", "deals_title.txt"):
+    for name in ("deals.md", "deals_title.txt", "line_deals.txt"):
         (out / name).unlink(missing_ok=True)
     if deals:
         title, body = build_deals(deals, now, os.environ.get("GITHUB_REPOSITORY_OWNER"), version, repo,
                                   test=test_force_deals)
         (out / "deals_title.txt").write_text(title, encoding="utf-8")
         (out / "deals.md").write_text(body, encoding="utf-8")
+        (out / "line_deals.txt").write_text(
+            build_line_deals(deals, now, settings.currency, test=test_force_deals),
+            encoding="utf-8",
+        )
         if test_force_deals:
             print(f"🧪 {len(deals)} 組已加入測試通知")
         else:
