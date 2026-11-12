@@ -200,3 +200,22 @@ def build_deals(deals: list[tuple[dict, Route]], now: dt.datetime, mention: str 
     if mention:
         body += ["", f"cc @{mention}"]
     return title, "\n".join(body) + "\n"
+
+
+def build_line_deals(deals: list[tuple[dict, Route]], now: dt.datetime, currency: str,
+                     *, test: bool = False) -> str:
+    label = "🧪 機票測試通知" if test else "✈️ 機票降價通知"
+    sections = [f"{label}｜查價時間 {now:%Y-%m-%d %H:%M}"]
+    for entry, _ in sorted(deals, key=lambda deal: deal[0]["total"]):
+        origin, destination = entry["origin"], entry["destination"]
+        airlines = "／".join(entry["airlines"]) or "未提供"
+        sections.append("\n".join([
+            f"{origin} → {destination}｜{entry['depart']} {entry['outbound']}",
+            f"{destination} → {origin}｜{entry['ret']} {entry['return_time']}",
+            f"航空公司：{airlines}",
+            f"本次估算總價：{entry['total']:,} {currency}"
+            f"（票價 {entry['fare']:,}＋行李 {entry['bag_add']:,}）",
+            f"近期搜尋價格：{entry['recent_price']}",
+            f"Google Flights 歷史價格比較：{entry['price_comparison']}",
+        ]))
+    return "\n\n".join(sections) + "\n"
