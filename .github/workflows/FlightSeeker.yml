@@ -15,6 +15,10 @@ on:
       - ".github/workflows/**"
   workflow_dispatch:
     inputs:
+      test_force_deals:
+        description: "測試通知（將本次成功查價的組合加入通知）"
+        type: boolean
+        default: false
       limit:
         description: "本次最多查幾組（留空 = 用 routes.yaml 的 queries_per_run）"
         required: false
@@ -71,6 +75,7 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         env:
           QUERY_LIMIT: ${{ inputs.limit }}
+          TEST_FORCE_DEALS: ${{ inputs.test_force_deals }}
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
         run: python -m flightseeker
 
