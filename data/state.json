@@ -5,11 +5,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 9547,
+  "fare": 9726,
   "bag_add": 2000,
-  "total": 11547,
+  "total": 11726,
   "airlines": [
    "Jin Air"
   ],
@@ -18,7 +18,7 @@
   "duration_min": 160,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 1,
-  "direct_total": 11547,
+  "direct_total": 11726,
   "direct_airlines": [
    "Jin Air"
   ],
@@ -532,11 +532,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 9547,
+  "fare": 9726,
   "bag_add": 2000,
-  "total": 11547,
+  "total": 11726,
   "airlines": [
    "Jin Air"
   ],
@@ -545,7 +545,7 @@
   "duration_min": 160,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 1,
-  "direct_total": 11547,
+  "direct_total": 11726,
   "direct_airlines": [
    "Jin Air"
   ],
@@ -1059,11 +1059,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 10132,
+  "fare": 10438,
   "bag_add": 0,
-  "total": 10132,
+  "total": 10438,
   "airlines": [
    "Korean Air"
   ],
@@ -1071,8 +1071,8 @@
   "outbound": "12:25→15:50",
   "duration_min": 145,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 3,
-  "direct_total": 10132,
+  "options": 4,
+  "direct_total": 10438,
   "direct_airlines": [
    "Korean Air"
   ],
@@ -1610,11 +1610,11 @@
   "destination": "ICN",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 10132,
+  "fare": 10438,
   "bag_add": 0,
-  "total": 10132,
+  "total": 10438,
   "airlines": [
    "Korean Air"
   ],
@@ -1622,8 +1622,8 @@
   "outbound": "12:25→15:50",
   "duration_min": 145,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 3,
-  "direct_total": 10132,
+  "options": 4,
+  "direct_total": 10438,
   "direct_airlines": [
    "Korean Air"
   ],
@@ -2161,11 +2161,11 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 9547,
+  "fare": 9726,
   "bag_add": 2000,
-  "total": 11547,
+  "total": 11726,
   "airlines": [
    "Jin Air"
   ],
@@ -2174,7 +2174,7 @@
   "duration_min": 160,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 1,
-  "direct_total": 11547,
+  "direct_total": 11726,
   "direct_airlines": [
    "Jin Air"
   ],
@@ -2680,24 +2680,24 @@
   "destination": "ICN",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T02:00:42+08:00",
+  "checked_at": "2026-11-12T08:57:49+08:00",
   "status": "ok",
-  "fare": 11684,
+  "fare": 12281,
   "bag_add": 0,
-  "total": 11684,
+  "total": 12281,
   "airlines": [
    "Korean Air"
   ],
   "stops": 0,
-  "outbound": "12:25→15:50",
-  "duration_min": 145,
+  "outbound": "11:05→14:40",
+  "duration_min": 155,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
-  "options": 4,
-  "direct_total": 11684,
+  "options": 5,
+  "direct_total": 12281,
   "direct_airlines": [
    "Korean Air"
   ],
-  "direct_outbound": "12:25→15:50",
+  "direct_outbound": "11:05→14:40",
   "alert_below": 9512,
   "price_comparison": "正常；常態區間 5,800–9,900 TWD；歷史最低 6,301 TWD（62 筆）",
   "price_insights": {
