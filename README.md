@@ -1,28 +1,34 @@
 # ✈️ FlightSeeker 機票監控
 
-> 最後執行：2026-11-12 10:30（台北時間）　本次查詢 3 組：成功 1、查無航班 2、錯誤 0
+> 最後執行：2026-11-12 10:44（台北時間）　本次查詢 6 組：成功 6、查無航班 0、錯誤 0
 >
-> 搜尋條件版本：2026-11-12 10:24 修改的 routes.yaml（[06f4e93](https://github.com/zzz756424-byte/Sean/commit/06f4e930e00b5fa4eb92cdc856891d04505da2e3) Update routes.yaml）
+> 搜尋條件版本：2026-11-12 10:44 修改的 routes.yaml（[6eb122b](https://github.com/zzz756424-byte/Sean/commit/6eb122bc811cdf34cab23c4cefb2760c5d353a03) Update routes.yaml）
 
-## 台中/台北 → 沖繩
+## 台中/台北 → 首爾
 
-RMQ → OKA，2027/03/20–2027/03/27，7/8 天，限直飛，低於自動低價線會通知（最近 30 天價格的第 0 百分位，紀錄不足時用 20,000）
+RMQ/TPE → ICN，2027/03/20–2027/03/27，7/8 天，限直飛，低於自動低價線會通知（最近 30 天價格的第 0 百分位，紀錄不足時用 20,000）
 
-已查過 3 / 3 組日期 × 機場組合（每次執行輪流查最久沒更新的組合）。
+已查過 6 / 6 組日期 × 機場組合（每次執行輪流查最久沒更新的組合）。
 
 <details><summary>各航線的通知門檻</summary>
 
 | 航線 | 低於多少會通知 | 來源 |
 |---|---:|---|
-| RMQ→OKA | 20,000 | 紀錄不足 |
+| RMQ→ICN | 9,493 | 自動 |
+| TPE→ICN | 9,512 | 自動 |
 
 </details>
 
-### 目前最便宜 1 組
+### 目前最便宜 6 組
 
 | 去 → 回 | 機場 | 航空公司 | 轉機 | 去程時間 | 票價 | 行李 | 估算總價 | 直飛最低 | 更新 | 連結 |
 |---|---|---|---|---|---:|---:|---:|---:|---|---|
-| 3/20(六) → 3/26(五) | RMQ→OKA | STARLUX Airlines | 直飛 | 13:15→15:45 | 12,021 | 已含 | **12,021** 🔥 | 同左 | 11/12 10:30 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDT0tBGhwSCjIwMjctMDMtMjYoAGoFEgNPS0FyBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/26(五) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,438 | 已含 | 10,438 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/27(六) | TPE→ICN | Korean Air | 直飛 | 12:25→15:50 | 10,438 | 已含 | 10,438 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/26(五) | RMQ→ICN | Jin Air | 直飛 | 11:00→14:40 | 9,726 | +2,000 | 11,726 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjYoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/20(六) → 3/27(六) | RMQ→ICN | Jin Air | 直飛 | 11:00→14:40 | 9,726 | +2,000 | 11,726 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/21(日) → 3/27(六) | RMQ→ICN | Jin Air | 直飛 | 11:00→14:40 | 9,726 | +2,000 | 11,726 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNSTVFyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
+| 3/21(日) → 3/27(六) | TPE→ICN | Korean Air | 直飛 | 11:05→14:40 | 12,281 | 已含 | 12,281 | 同左 | 11/12 10:44 | [查看](https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjEoAGoFEgNUUEVyBRIDSUNOGhwSCjIwMjctMDMtMjcoAGoFEgNJQ05yBRIDVFBFQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD) |
 
 ---
 
