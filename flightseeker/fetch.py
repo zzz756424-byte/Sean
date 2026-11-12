@@ -275,7 +275,16 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
             currency=settings.currency,
             hide_separate_and_self_transfer=True,
         )
-        return_results = get_flights(return_query)
+        for attempt in range(1, 4):
+            try:
+                return_results = get_flights(return_query)
+                break
+            except Exception as exc:
+                if attempt == 3:
+                    raise
+                print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}："
+                      f"第 {attempt} 次查詢失敗（{type(exc).__name__}），3 秒後重試")
+                time.sleep(3)
         return_meta = getattr(return_results, "metadata", None)
         return_allowed = {a.name for a in (return_meta.airlines if return_meta else [])
                           if a.code in route.airlines}
@@ -289,7 +298,10 @@ def google_fetcher(combo: Combo, route: Route, settings: Settings) -> Quote:
         )
         if cheapest_return is not None:
             best.return_reference = _flight_times(cheapest_return.flights)
-    except Exception:
+        else:
+            print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}：查無符合條件的班次")
+    except Exception as exc:
+        print(f"  回程 {combo.destination}→{combo.origin} {combo.ret}：查詢或解析失敗（{type(exc).__name__}）")
         best.return_reference = "查詢失敗"
     if best_direct is not None:
         best.direct_total = best_direct.total
