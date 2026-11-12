@@ -41,11 +41,63 @@ jobs:
           HOTEL_ALERTS_FILE: ${{ runner.temp }}/hotel-alerts.md
         run: |
           if [[ -s "$HOTEL_ALERTS_FILE" ]]; then
-            printf '\ncc @%s\n' "$GITHUB_REPOSITORY_OWNER" >> "$HOTEL_ALERTS_FILE"
-            gh issue create --title "飯店降價通知" --body-file "$HOTEL_ALERTS_FILE"
+            { cat "$HOTEL_ALERTS_FILE"; printf '\ncc @%s\n' "$GITHUB_REPOSITORY_OWNER"; } |
+              gh issue create --title "飯店降價通知" --body-file -
           fi
+      - name: Push hotel price drops to LINE
+        if: ${{ !cancelled() }}
+        env:
+          HOTEL_ALERTS_FILE: ${{ runner.temp }}/hotel-alerts.md
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from urllib.error import HTTPError, URLError
+          from urllib.request import Request, urlopen
+
+          path = Path(os.environ["HOTEL_ALERTS_FILE"])
+          if not path.is_file():
+              raise SystemExit(0)
+          alerts = path.read_text(encoding="utf-8").strip()
+          if not alerts:
+              raise SystemExit(0)
+
+          token = os.environ["LINE_CHANNEL_ACCESS_TOKEN"].strip()
+          user_id = os.environ["LINE_USER_ID"].strip()
+          if not token or not user_id:
+              raise SystemExit("請設定 LINE_CHANNEL_ACCESS_TOKEN 和 LINE_USER_ID")
+
+          run_url = (f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+                     f"/actions/runs/{os.environ['GITHUB_RUN_ID']}")
+          heading = "🔔 飯店降價通知\n\n"
+          suffix = f"\n\n查價結果：{run_url}"
+          message = heading + alerts + suffix
+          if len(message.encode("utf-16-le")) > 10000:
+              suffix = "\n…其餘報價請查看執行摘要" + suffix
+              budget = 10000 - len((heading + suffix).encode("utf-16-le"))
+              alerts = alerts.encode("utf-16-le")[:budget].decode("utf-16-le", errors="ignore")
+              message = heading + alerts + suffix
+          payload = {"to": user_id, "messages": [{"type": "text", "text": message}]}
+          request = Request(
+              "https://api.line.me/v2/bot/message/push",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              with urlopen(request, timeout=30):
+                  print("LINE 已接受飯店降價推播")
+          except HTTPError as exc:
+              raise SystemExit(f"LINE 推播失敗（HTTP {exc.code}）") from None
+          except (URLError, TimeoutError):
+              raise SystemExit("LINE 推播連線失敗") from None
+          PY
       - uses: actions/cache/save@v4
         if: always() && hashFiles('data/hotel_history.json') != ''
         with:
           path: data/hotel_history.json
           key: hotel-history-${{ github.run_id }}-${{ github.run_attempt }}
+
