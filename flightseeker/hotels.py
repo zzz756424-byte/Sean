@@ -304,35 +304,39 @@ def run_search(args, key, context, history, now, alerts, line_alerts):
         source = source.replace("|", "&#124;").replace("\n", " ")
         booking = f"[查看](<{link}>)" if link else "—"
         lines.append(f"| {index} | {total_text} | {nightly_text} | {source} | {price_history} | {booking} |")
-    if args.notify_drop is not None:
-        seen = set()
-        line_rows = []
-        for total, taxes, _, source, _ in ranked:
-            group = (source.strip().casefold(), taxes)
-            if group in seen:
-                continue
-            seen.add(group)
-            past = recent.get(group)
-            if not past:
-                print(f"通知判斷｜{source}（{taxes}）：沒有可比較的近 {RECENT_PRICE_DAYS} 天紀錄")
-            elif past[0] - total < args.notify_drop:
-                print(f"通知判斷｜{source}（{taxes}）：本次 {total:,}，前 {RECENT_PRICE_DAYS} 天最低 "
-                      f"{past[0]:,}，需低至少 {args.notify_drop:,} {args.currency}，未達門檻")
-            else:
-                message = (f"{details['name']}｜{args.check_in} → {args.check_out}｜"
-                           f"{args.adults} 位成人｜{source}（{taxes}）｜全程總價 {total:,} {args.currency}，"
-                           f"比近 {RECENT_PRICE_DAYS} 天最低價 {past[0]:,} 低 {past[0] - total:,}")
-                alerts.append(f"- {message}")
-                low, high, count = past
-                line_rows.append(
-                    f"{source}（{taxes}）｜全程總價 {total:,} {args.currency}\n"
-                    f"近 {RECENT_PRICE_DAYS} 天：{low:,}–{high:,} {args.currency}（{count} 筆）"
-                )
-        if line_rows:
-            heading = f"{details['name']}｜{args.check_in} → {args.check_out}"
-            line_alerts.append(heading + "\n\n" + "\n\n".join(line_rows))
-    else:
+    seen = set()
+    line_rows = []
+    if args.notify_drop is None:
         print("通知判斷｜未設定 notify_drop")
+    for total, taxes, _, source, _ in ranked:
+        group = (source.strip().casefold(), taxes)
+        if group in seen:
+            continue
+        seen.add(group)
+        past = recent.get(group)
+        if not past:
+            print(f"通知判斷｜{source}（{taxes}）：近期搜尋價格 0 筆，加入 LINE 推播")
+            history_text = "0 筆"
+        elif args.notify_drop is None:
+            continue
+        elif past[0] - total < args.notify_drop:
+            print(f"通知判斷｜{source}（{taxes}）：本次 {total:,}，前 {RECENT_PRICE_DAYS} 天最低 "
+                  f"{past[0]:,}，需低至少 {args.notify_drop:,} {args.currency}，未達門檻")
+            continue
+        else:
+            low, high, count = past
+            message = (f"{details['name']}｜{args.check_in} → {args.check_out}｜"
+                       f"{args.adults} 位成人｜{source}（{taxes}）｜全程總價 {total:,} {args.currency}，"
+                       f"比近 {RECENT_PRICE_DAYS} 天最低價 {low:,} 低 {low - total:,}")
+            alerts.append(f"- {message}")
+            history_text = f"{low:,}–{high:,} {args.currency}（{count} 筆）"
+        line_rows.append(
+            f"{source}（{taxes}）｜全程總價 {total:,} {args.currency}\n"
+            f"近期搜尋價格（近 {RECENT_PRICE_DAYS} 天）：{history_text}"
+        )
+    if line_rows:
+        heading = f"{details['name']}｜{args.check_in} → {args.check_out}"
+        line_alerts.append(heading + "\n\n" + "\n\n".join(line_rows))
     if not quotes:
         message = "查無附全程總價的訂房平台報價"
         if args.providers:
