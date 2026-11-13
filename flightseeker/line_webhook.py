@@ -6,6 +6,7 @@ import hmac
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
 from unicodedata import normalize
@@ -86,22 +87,31 @@ def direct_flights(origin, dest, date):
 
 
 def flight_results(queries):
+    queries = tuple(queries)
+    legs = dict.fromkeys(
+        leg
+        for origin, dest, depart, ret, _ in queries
+        for leg in ((origin, dest, depart), (dest, origin, ret))
+    )
     cache = {}
+    failures = 0
+    if legs:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            pending = {executor.submit(direct_flights, *leg): leg for leg in legs}
+            for future in as_completed(pending):
+                leg = pending[future]
+                try:
+                    cache[leg] = future.result()
+                except Exception:
+                    logging.exception("Google Flights search failed for %s-%s %s", *leg)
+                    cache[leg] = {}
+                    failures += 1
+
     matches_by_date = {}
     page = ""
-    failures = 0
     for origin, dest, depart, ret, days in queries:
-        directions = []
-        for key in ((origin, dest, depart), (dest, origin, ret)):
-            if key not in cache:
-                try:
-                    cache[key] = direct_flights(*key)
-                except Exception:
-                    logging.exception("Google Flights search failed for %s-%s %s", *key)
-                    cache[key] = {}
-                    failures += 1
-            directions.append(cache[key])
-        outbound, inbound = directions
+        outbound = cache[origin, dest, depart]
+        inbound = cache[dest, origin, ret]
         returns_by_airline = {}
         for (code, date, _, times), (_, fare) in inbound.items():
             returns_by_airline.setdefault(code, []).append((date, times, fare))
