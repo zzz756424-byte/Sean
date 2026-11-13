@@ -44,20 +44,33 @@ export default {
             return new Response(null, { status: 400 });
         }
 
+        console.info("LINE webhook received", { version: "dispatch-diagnostics-v1", eventCount: events.length });
         const requests = [];
         for (const event of events) {
-            const message = event.message?.text;
-            if (event.type !== "message" || event.mode === "standby"
-                || event.message?.type !== "text" || typeof message !== "string"
-                || !["查機票", "查機票*"].includes(message.trim().split(/\r?\n/, 1)[0].trim())) {
+            const rawMessage = event.message?.text;
+            const message = typeof rawMessage === "string"
+                ? rawMessage.normalize("NFKC").replace(/\r\n?/g, "\n").trim() : "";
+            const command = message.split("\n", 1)[0].trim();
+            const skipReason = event.type !== "message" ? "not_message"
+                : event.mode === "standby" ? "standby"
+                : event.message?.type !== "text" || typeof rawMessage !== "string" ? "not_text"
+                : !["查機票", "查機票*"].includes(command) ? "unsupported_command" : null;
+            if (skipReason) {
+                console.info("LINE event skipped", { reason: skipReason });
                 continue;
             }
             const source = event.source;
             const target = { user: source?.userId, group: source?.groupId, room: source?.roomId }[source?.type];
             if (!target) {
+                console.info("LINE event skipped", { reason: "missing_target" });
                 continue;
             }
             const endpoint = `https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/LineFlightSearch.yml/dispatches`;
+            console.info("GitHub dispatch requested", {
+                repository: GITHUB_REPOSITORY,
+                ref: env.GITHUB_DISPATCH_REF || "main",
+                workflow: "LineFlightSearch.yml",
+            });
             requests.push(fetch(endpoint, {
                 method: "POST",
                 headers: {
@@ -91,6 +104,11 @@ export default {
                     requestId: result.value.headers.get("x-github-request-id"),
                     reason,
                     acceptedPermissions: result.value.headers.get("x-accepted-github-permissions"),
+                });
+            } else {
+                console.info("GitHub dispatch accepted", {
+                    status: result.value.status,
+                    requestId: result.value.headers.get("x-github-request-id"),
                 });
             }
         }
