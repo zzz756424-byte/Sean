@@ -1,6 +1,6 @@
 # ✈️ FlightSeeker 機票監控
 
-> 最後執行：2026-11-13 15:07（台北時間）　本次查詢 3 組：成功 1、查無航班 1、錯誤 1
+> 最後執行：2026-11-13 15:07（台北時間）　本次查詢 3 組：成功 1、查無航班 2、錯誤 0
 >
 > 搜尋條件版本：2026-11-12 10:49 修改的 routes.yaml（[021537b](https://github.com/zzz756424-byte/Sean/commit/021537b9dcaf50717f45ad9232794abf77ffbe47) Update routes.yaml）
 
