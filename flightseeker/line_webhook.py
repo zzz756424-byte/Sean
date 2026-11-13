@@ -11,17 +11,19 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
 from unicodedata import normalize
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .airports import airport_codes
-from .fetch import EmptyResult, _flight_times, google_query, google_results
+from .fetch import EmptyResult, _flight_times, _serpapi_ssl_context, google_query, google_results
 
 EXAMPLE = """查機票
 去程地點:台中/台北
 回程地點:沖繩
-最早去程時間:2027/4/10
-最晚回程時間:2027/4/17
+最早去程時間:2027/3/20
+最晚回程時間:2027/3/26
 最短遊玩天數:7"""
+SEARCH_COMMANDS = {"查機票", "查機票*"}
 
 
 def parse_search(message):
@@ -58,114 +60,218 @@ def parse_search(message):
             for back in range(out + days - 1, days + slack)]
 
 
-def direct_flights(origin, dest, date):
+def google_round_trip(origin, dest, depart, ret, days):
     from fast_flights import FlightQuery
 
-    leg = FlightQuery(date=date.isoformat(), from_airport=origin, to_airport=dest, max_stops=0)
-    started = perf_counter()
-    retry_wait = 0
+    legs = [FlightQuery(date=depart.isoformat(), from_airport=origin, to_airport=dest, max_stops=1),
+            FlightQuery(date=ret.isoformat(), from_airport=dest, to_airport=origin, max_stops=0)]
+    try:
+        results = google_results(google_query(legs, "round-trip"))
+    except EmptyResult:
+        return []
 
-    def record_retry(delay):
-        nonlocal retry_wait
-        retry_wait += delay
+    rows = []
+    for option in results:
+        if len(option.flights or []) != 1 or not option.price or not option.airlines:
+            continue
+        arrival = dt.date(*option.flights[0].arrival.date)
+        if (ret - arrival).days + 1 >= days:
+            airline = "／".join(name for name in option.airlines if name)
+            if airline:
+                rows.append((int(option.price), depart, ret, origin, dest,
+                             _flight_times(option.flights), None, airline))
+    if not rows:
+        return rows
 
     try:
-        results = google_results(google_query([leg], "one-way"), on_retry=record_retry)
+        return_options = google_results(google_query([legs[1]], "one-way"))
+        return_times = {}
+        for option in return_options:
+            if len(option.flights or []) != 1:
+                continue
+            if dt.date(*option.flights[0].departure.date) != ret:
+                continue
+            for name in option.airlines or []:
+                if name:
+                    return_times.setdefault(name.strip().casefold(), set()).add(
+                        _flight_times(option.flights))
     except EmptyResult:
-        return {}
-    finally:
-        print(f"Google Flights {origin}→{dest} {date}："
-              f"{perf_counter() - started:.2f} 秒（重試等待 {retry_wait} 秒）", flush=True)
+        return rows
+    except Exception:
+        logging.exception("Google Flights return reference failed for %s-%s %s", dest, origin, ret)
+        return rows
 
-    flights = {}
-    for flight in results:
-        if len(flight.flights or []) != 1 or not flight.price:
+    for index, row in enumerate(rows):
+        airline = row[-1].strip().casefold()
+        times = return_times.get(airline)
+        if times:
+            reference = "回程時間參考：" + "／".join(sorted(times))
+            rows[index] = (*row[:6], reference, row[-1])
+    return rows
+
+
+def serpapi_options(params):
+    with urlopen("https://serpapi.com/search.json?" + urlencode(params), timeout=30,
+                 context=_serpapi_ssl_context()) as response:
+        data = json.load(response)
+    if data.get("error"):
+        raise ValueError("SerpApi returned an error")
+    return (data.get("best_flights") or []) + (data.get("other_flights") or [])
+
+
+def serpapi_direct_segment(option, origin, dest, date):
+    segments = option.get("flights") or []
+    if len(segments) != 1:
+        return None
+    segment = segments[0]
+    departure = segment.get("departure_airport") or {}
+    arrival = segment.get("arrival_airport") or {}
+    if departure.get("id") != origin or arrival.get("id") != dest:
+        return None
+    try:
+        start = dt.datetime.fromisoformat(departure["time"])
+        end = dt.datetime.fromisoformat(arrival["time"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    airline = (segment.get("airline") or "").strip()
+    if not airline or start.date() != date:
+        return None
+    shift = "+1" if end.date() != start.date() else ""
+    return airline, end.date(), f"{start:%H:%M}→{end:%H:%M}{shift}"
+
+
+def serpapi_round_trip(origin, dest, depart, ret, days, api_key):
+    params = dict(engine="google_flights", api_key=api_key, type=1, stops=1,
+                  departure_id=origin, arrival_id=dest, outbound_date=depart.isoformat(),
+                  return_date=ret.isoformat(), adults=1, travel_class=1, currency="TWD", hl="en", gl="tw")
+    rows = []
+    failed = False
+    seen_tokens = set()
+    for option in serpapi_options(params):
+        outbound = serpapi_direct_segment(option, origin, dest, depart)
+        token = option.get("departure_token")
+        if not outbound or not token or token in seen_tokens:
             continue
-        segment = flight.flights[0]
-        times = (
-            dt.date(*segment.departure.date),
-            dt.date(*segment.arrival.date),
-            _flight_times(flight.flights),
-        )
-        for name in (flight.airlines or []):
-            if name and name.strip():
-                airline = name.strip()
-                key = (airline.casefold(), *times)
-                fare = int(flight.price)
-                if key not in flights or fare < flights[key][1]:
-                    flights[key] = (airline, fare)
-    return flights
+        airline, arrival, times = outbound
+        if (ret - arrival).days + 1 < days:
+            continue
+        seen_tokens.add(token)
+        try:
+            returns = serpapi_options(dict(params, departure_token=token))
+        except Exception as exc:
+            logging.warning("SerpApi return search failed (%s)", type(exc).__name__)
+            failed = True
+            continue
+        for offer in returns:
+            inbound = serpapi_direct_segment(offer, dest, origin, ret)
+            fare = offer.get("price")
+            if inbound and inbound[0].casefold() == airline.casefold() and type(fare) in (int, float) and fare > 0:
+                rows.append((int(fare), depart, ret, origin, dest, times, inbound[2], airline))
+    return rows, failed
 
 
-def flight_results(queries):
-    queries = tuple(queries)
-    legs = dict.fromkeys(
-        leg
-        for origin, dest, depart, ret, _ in queries
-        for leg in ((origin, dest, depart), (dest, origin, ret))
-    )
-    cache = {}
-    failed_legs = set()
-    if legs:
+def fill_serpapi_return_times(rows, api_key):
+    missing = {(dest, origin, ret) for _, _, ret, origin, dest, _, times, _ in rows if not times}
+
+    def lookup(leg):
+        origin, dest, date = leg
+        params = dict(engine="google_flights", api_key=api_key, type=2, stops=1,
+                      departure_id=origin, arrival_id=dest, outbound_date=date.isoformat(),
+                      adults=1, travel_class=1, currency="TWD", hl="en", gl="tw")
+        times = {}
+        for option in serpapi_options(params):
+            segment = serpapi_direct_segment(option, origin, dest, date)
+            if segment:
+                airline, _, time = segment
+                times.setdefault(airline.casefold(), set()).add(time)
+        return times
+
+    references = {}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        pending = {executor.submit(lookup, leg): leg for leg in missing}
+        for future in as_completed(pending):
+            leg = pending[future]
+            try:
+                references[leg] = future.result()
+            except Exception as exc:
+                logging.warning("SerpApi return reference failed for %s-%s %s (%s)",
+                                *leg, type(exc).__name__)
+
+    for index, row in enumerate(rows):
+        _, _, ret, origin, dest, _, times, airline = row
+        if not times:
+            matches = references.get((dest, origin, ret), {}).get(airline.strip().casefold())
+            if matches:
+                reference = "回程時間參考（SerpApi）：" + "／".join(sorted(matches))
+                rows[index] = (*row[:6], reference, airline)
+
+
+def flight_results(queries, *, serpapi_only=False):
+    queries = tuple(dict.fromkeys(queries))
+    api_key = os.environ.get("SERPAPI_API_KEY", "").strip()
+    if serpapi_only and not api_key:
+        yield "查機票* 需要設定 SERPAPI_API_KEY。"
+        return
+    estimates = []
+    failed_queries = set()
+    if queries and not serpapi_only:
+        print(f"Google Flights 先查詢 {len(queries)} 組來回日期", flush=True)
         with ThreadPoolExecutor(max_workers=4) as executor:
-            pending = {executor.submit(direct_flights, *leg): leg for leg in legs}
+            pending = {executor.submit(google_round_trip, *query): query for query in queries}
             for future in as_completed(pending):
-                leg = pending[future]
+                query = pending[future]
                 try:
-                    cache[leg] = future.result()
+                    estimates.extend(future.result())
                 except Exception:
-                    logging.exception("Google Flights search failed for %s-%s %s", *leg)
-                    cache[leg] = {}
-                    failed_legs.add(leg)
+                    logging.exception("Google Flights round-trip search failed for %s-%s %s–%s", *query[:4])
+                    failed_queries.add(query)
 
-    matches_by_date = {}
-    pending_returns = {}
+        print(f"Google Flights 查詢完成：{len(estimates)} 筆符合條件的來回起價，"
+              f"{len(failed_queries)} 組查詢失敗", flush=True)
+
+    confirmed = []
+    fallback_failed = False
+    if api_key and any(not row[6] for row in estimates):
+        fill_serpapi_return_times(estimates, api_key)
+    if queries and not estimates and api_key:
+        action = "直接查詢" if serpapi_only else "補查"
+        print(f"SerpApi {action} {len(queries)} 組來回日期", flush=True)
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            pending = {executor.submit(serpapi_round_trip, *query, api_key): query for query in queries}
+            for future in as_completed(pending):
+                query = pending[future]
+                try:
+                    rows, partial_failure = future.result()
+                    confirmed.extend(rows)
+                    fallback_failed |= partial_failure
+                    failed_queries.discard(query)
+                except Exception as exc:
+                    logging.warning("SerpApi round-trip search failed for %s-%s %s–%s (%s)",
+                                    *query[:4], type(exc).__name__)
+                    fallback_failed = True
+    yield from format_flights(confirmed or estimates, failed_queries, fallback_failed)
+
+
+
+def format_flights(rows, failed_queries, fallback_failed):
+    best_by_trip = {}
+    for fare, *itinerary in rows:
+        key = tuple(itinerary)
+        best_by_trip[key] = min(fare, best_by_trip.get(key, fare))
+    by_date = {}
+    for itinerary, fare in best_by_trip.items():
+        by_date.setdefault(itinerary[:2], []).append((fare, *itinerary))
+    cheapest = [row for group in by_date.values() for row in sorted(group)[:5]]
+
     page = ""
-    outbound_failures = set()
-    for origin, dest, depart, ret, days in queries:
-        outbound_key = (origin, dest, depart)
-        inbound_key = (dest, origin, ret)
-        if outbound_key in failed_legs:
-            outbound_failures.add(outbound_key)
-        outbound = cache[outbound_key]
-        inbound = cache[inbound_key]
-        if inbound_key in failed_legs:
-            for (_, date, arrival, times), (airline, fare) in outbound.items():
-                if (ret - arrival).days + 1 >= days:
-                    pending_returns.setdefault((date, ret), []).append(
-                        (fare, date, ret, origin, dest, times, None, airline)
-                    )
-            continue
-        returns_by_airline = {}
-        for (code, date, _, times), (_, fare) in inbound.items():
-            returns_by_airline.setdefault(code, []).append((date, times, fare))
-        for (code, date, arrival, times), (airline, fare) in outbound.items():
-            for back_date, back_times, back_fare in returns_by_airline.get(code, ()):
-                if (back_date - arrival).days + 1 >= days:
-                    matches_by_date.setdefault((date, back_date), []).append(
-                        (fare + back_fare, origin, dest, times, back_times, airline)
-                    )
-    cheapest = [
-        (total, date, back_date, origin, dest, times, back_times, airline)
-        for (date, back_date), matches in matches_by_date.items()
-        for total, origin, dest, times, back_times, airline in sorted(matches)[:5]
-    ]
-    remaining = [
-        row
-        for dates, matches in pending_returns.items()
-        for row in sorted(matches)[:max(0, 5 - len(matches_by_date.get(dates, ())))]
-    ]
-    for total, date, back_date, origin, dest, times, back_times, airline in (
-        sorted(cheapest) + sorted(remaining)
-    ):
+    for total, date, back_date, origin, dest, times, back_times, airline in sorted(cheapest):
         back_time_text = back_times or "回程時間未查到"
-        price_text = (f"本次估算總價：{total:,} TWD" if back_times
-                      else f"去程單程票價：{total:,} TWD｜來回總價未取得")
+        price_label = "來回起價" if not back_times or back_times.startswith("回程時間參考") else "來回總價"
         block = (
             f"{origin} → {dest}｜{date} {times}\n"
             f"{dest} → {origin}｜{back_date} {back_time_text}\n"
             f"航空公司：{airline}\n"
-            f"{price_text}"
+            f"{price_label}：{total:,} TWD"
         )
         if len(page) + len(block) + 2 > 4500:
             yield page
@@ -173,10 +279,13 @@ def flight_results(queries):
         page = f"{page}\n\n{block}" if page else block
     if page:
         yield page
-    if outbound_failures:
-        yield f"有 {len(outbound_failures)} 個去程航段在重試後仍未取得 Google Flights 結果，結果可能不完整。"
-    elif not page:
-        yield "查無去回程皆直飛的同一家航空公司。"
+    if failed_queries:
+        yield f"有 {len(failed_queries)} 組日期未取得 Google Flights 來回結果。"
+    if fallback_failed:
+        yield "部分 SerpApi 補查未取得資料。"
+    if not page and not failed_queries and not fallback_failed:
+        yield "查無符合條件的來回票價。"
+
 
 
 def push(token, target, message):
@@ -190,14 +299,17 @@ def push(token, target, message):
 
 
 def deliver_results(token, target, message):
+    command = message.strip().partition("\n")[0].strip()
+    serpapi_only = command == "查機票*"
+    example = EXAMPLE.replace("查機票", "查機票*", 1) if serpapi_only else EXAMPLE
     try:
         query = parse_search(message)
     except ValueError as exc:
-        push(token, target, EXAMPLE if message.strip() == "查機票" else f"{exc}\n\n{EXAMPLE}")
+        push(token, target, example if message.strip() in SEARCH_COMMANDS else f"{exc}\n\n{example}")
         return
     try:
         search_started = perf_counter()
-        pages = list(flight_results(query))
+        pages = list(flight_results(query, serpapi_only=serpapi_only))
     except Exception:
         logging.exception("Flight search unavailable")
         push(token, target, "暫時無法查詢機票，請稍後再試。")
@@ -249,7 +361,7 @@ def make_handler(secret, dispatch):
                             or event.get("mode") == "standby"):
                         continue
                     lines = message["text"].strip().splitlines()
-                    if not lines or lines[0].strip() != "查機票":
+                    if not lines or lines[0].strip() not in SEARCH_COMMANDS:
                         continue
                     source = event["source"]
                     target = source[{"user": "userId", "group": "groupId", "room": "roomId"}[source["type"]]]

@@ -276,10 +276,10 @@ def google_results(query, *, on_retry=None):
                 on_retry(delay)
             time.sleep(delay)
         except TypeError as exc:
-            # 真的沒有符合條件的航班時，Google 回傳的資料是空的（fast-flights 解析會丟 TypeError）。
-            # 再試一次確認
             if empty_retried:
-                raise EmptyResult(f"empty result: {exc}") from exc
+                if _empty_fast_flights_response(exc):
+                    raise EmptyResult(f"Google 航班清單欄位為空：{exc}") from exc
+                raise GoogleError(f"fast-flights 解析失敗：{exc}") from exc
             empty_retried = True
             if on_retry is not None:
                 on_retry(3)

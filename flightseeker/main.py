@@ -8,6 +8,7 @@ import os
 import random
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -113,11 +114,30 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
     line_deals: list[tuple[dict, Route]] = []
     consecutive_errors = 0
 
-    for i, combo in enumerate(todo):
-        if i:
-            sleep(random.uniform(*settings.delay_seconds))
+    def fetch_quote(combo, entry):
         route = routes[combo.route]
-        entry = state.get(combo.key, {})
+        quote = fetch_checked(fetcher, combo, route, settings, entry)
+        if fetcher is google_fetcher:
+            quote.price_comparison, quote.price_insights = cached_price_insights(
+                combo, route, settings, entry, now)
+        return quote
+
+    def scheduled_quotes():
+        # Process results in selection order and keep the number of in-flight requests bounded.
+        workers = 3 if fetcher is google_fetcher else 1
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for start in range(0, len(todo), workers):
+                if start:
+            sleep(random.uniform(*settings.delay_seconds))
+                batch = []
+                for combo in todo[start:start + workers]:
+                    entry = dict(state.get(combo.key, {}))
+                    batch.append((combo, entry, executor.submit(fetch_quote, combo, entry)))
+                yield from batch
+
+    scheduled = scheduled_quotes()
+    for combo, entry, future in scheduled:
+        route = routes[combo.route]
         entry.update({
             "route": combo.route, "origin": combo.origin, "destination": combo.destination,
             "depart": combo.depart.isoformat(), "ret": combo.ret.isoformat(),
@@ -125,7 +145,7 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
         })
         run_info["attempted"] += 1
         try:
-            quote = fetch_checked(fetcher, combo, route, settings, entry)
+            quote = future.result()
         except NoFlights:
             entry.pop("suspect_none", None)
             entry.pop("error", None)
@@ -144,14 +164,12 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
             if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
                 run_info["stopped_early"] = True
                 print("連續錯誤過多，提前停止本次執行", file=sys.stderr)
+                scheduled.close()
                 break
             continue
         else:
             consecutive_errors = 0
             run_info["ok"] += 1
-            if fetcher is google_fetcher:
-                quote.price_comparison, quote.price_insights = cached_price_insights(
-                    combo, route, settings, entry, now)
             entry.pop("error", None)
             entry.pop("suspect_none", None)
             entry.update({

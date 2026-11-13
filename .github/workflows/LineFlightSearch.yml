@@ -30,4 +30,5 @@ jobs:
       - name: Search and push to LINE
         env:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
         run: python -m flightseeker.line_action

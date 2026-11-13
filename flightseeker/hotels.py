@@ -1,6 +1,7 @@
 """指定飯店的 Google Hotels 訂房比價。"""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import datetime as dt
 import json
 import math
@@ -239,9 +240,12 @@ def main():
     all_found = True
     alerts = []
     line_alerts = []
-    for search in searches:
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        pending = [executor.submit(fetch_hotel, search, key, context) for search in searches]
+        for search, future in zip(searches, pending):
         try:
-            if not run_search(search, key, context, history, now, alerts, line_alerts):
+                token, details = future.result()
+                if not report_search(search, token, details, history, now, alerts, line_alerts):
                 all_found = False
         except ValueError as exc:
             print(f"{search.hotel or search.property_token}：{exc}")
@@ -263,7 +267,11 @@ def main():
 
 
 def run_search(args, key, context, history, now, alerts, line_alerts):
-    nights = (args.check_out - args.check_in).days
+    token, details = fetch_hotel(args, key, context)
+    return report_search(args, token, details, history, now, alerts, line_alerts)
+
+
+def fetch_hotel(args, key, context):
     params = dict(check_in_date=args.check_in.isoformat(), check_out_date=args.check_out.isoformat(),
                   adults=args.adults, currency=args.currency, gl="tw", hl="zh-tw")
     token = args.property_token
@@ -277,6 +285,11 @@ def run_search(args, key, context, history, now, alerts, line_alerts):
     details = request_hotels(dict(params, property_token=token), key, context)
     if not details.get("name"):
         raise ValueError("SerpApi 未回傳指定飯店的詳細資料")
+    return token, details
+
+
+def report_search(args, token, details, history, now, alerts, line_alerts):
+    nights = (args.check_out - args.check_in).days
     ranked = rank_prices(details, args.providers)
     recent = recent_prices(history, args, token, ranked, now)
     quotes = ranked[:args.top]
