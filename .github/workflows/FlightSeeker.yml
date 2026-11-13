@@ -4,14 +4,6 @@ on:
   schedule:
     - cron: "0 8,12,16,20 * * *"
       timezone: "Asia/Taipei"
-  push:
-    # 修改搜尋條件或程式後立刻跑一次
-    branches: [main]
-    paths:
-      - routes.yaml
-      - requirements.txt
-      - "flightseeker/**"
-      - ".github/workflows/**"
   workflow_dispatch:
     inputs:
       test_force_deals:
