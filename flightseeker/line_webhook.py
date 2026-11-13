@@ -105,7 +105,7 @@ def flight_results(queries):
         for leg in ((origin, dest, depart), (dest, origin, ret))
     )
     cache = {}
-    failures = 0
+    failed_legs = set()
     if legs:
         with ThreadPoolExecutor(max_workers=4) as executor:
             pending = {executor.submit(direct_flights, *leg): leg for leg in legs}
@@ -116,13 +116,26 @@ def flight_results(queries):
                 except Exception:
                     logging.exception("Google Flights search failed for %s-%s %s", *leg)
                     cache[leg] = {}
-                    failures += 1
+                    failed_legs.add(leg)
 
     matches_by_date = {}
+    pending_returns = {}
     page = ""
+    outbound_failures = set()
     for origin, dest, depart, ret, days in queries:
-        outbound = cache[origin, dest, depart]
-        inbound = cache[dest, origin, ret]
+        outbound_key = (origin, dest, depart)
+        inbound_key = (dest, origin, ret)
+        if outbound_key in failed_legs:
+            outbound_failures.add(outbound_key)
+        outbound = cache[outbound_key]
+        inbound = cache[inbound_key]
+        if inbound_key in failed_legs:
+            for (_, date, arrival, times), (airline, fare) in outbound.items():
+                if (ret - arrival).days + 1 >= days:
+                    pending_returns.setdefault((date, ret), []).append(
+                        (fare, date, ret, origin, dest, times, None, airline)
+                    )
+            continue
         returns_by_airline = {}
         for (code, date, _, times), (_, fare) in inbound.items():
             returns_by_airline.setdefault(code, []).append((date, times, fare))
@@ -137,12 +150,22 @@ def flight_results(queries):
         for (date, back_date), matches in matches_by_date.items()
         for total, origin, dest, times, back_times, airline in sorted(matches)[:5]
     ]
-    for total, date, back_date, origin, dest, times, back_times, airline in sorted(cheapest):
+    remaining = [
+        row
+        for dates, matches in pending_returns.items()
+        for row in sorted(matches)[:max(0, 5 - len(matches_by_date.get(dates, ())))]
+    ]
+    for total, date, back_date, origin, dest, times, back_times, airline in (
+        sorted(cheapest) + sorted(remaining)
+    ):
+        back_time_text = back_times or "回程時間未查到"
+        price_text = (f"本次估算總價：{total:,} TWD" if back_times
+                      else f"去程單程票價：{total:,} TWD｜來回總價未取得")
         block = (
             f"{origin} → {dest}｜{date} {times}\n"
-            f"{dest} → {origin}｜{back_date} {back_times}\n"
+            f"{dest} → {origin}｜{back_date} {back_time_text}\n"
             f"航空公司：{airline}\n"
-            f"本次估算總價：{total:,} TWD"
+            f"{price_text}"
         )
         if len(page) + len(block) + 2 > 4500:
             yield page
@@ -150,8 +173,8 @@ def flight_results(queries):
         page = f"{page}\n\n{block}" if page else block
     if page:
         yield page
-    if failures:
-        yield f"有 {failures} 次 Google Flights 查詢失敗，結果可能不完整。"
+    if outbound_failures:
+        yield f"有 {len(outbound_failures)} 個去程航段在重試後仍未取得 Google Flights 結果，結果可能不完整。"
     elif not page:
         yield "查無去回程皆直飛的同一家航空公司。"
 
