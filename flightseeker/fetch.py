@@ -257,7 +257,7 @@ def google_query(flights, trip, adults=1, currency="TWD"):
     )
 
 
-def google_results(query):
+def google_results(query, *, on_retry=None):
     from fast_flights import FlightsNotFound, get_flights
 
     google_errors = 0
@@ -269,15 +269,20 @@ def google_results(query):
             # fast-flights 把 Google 的 ErrorResponse 當成「查無航班」，但實測同一個查詢會隨機在
             # 正常結果和 ErrorResponse 之間跳動，所以是暫時性錯誤：重試，最後仍失敗就當成錯誤
             google_errors += 1
-            if google_errors >= 3:
-                raise GoogleError(f"Google 回傳錯誤，重試 {google_errors} 次仍失敗: {exc}") from exc
-            time.sleep(2 * google_errors)
+            if google_errors >= 2:
+                raise GoogleError(f"Google 回傳錯誤，嘗試 {google_errors} 次仍失敗: {exc}") from exc
+            delay = 2 * google_errors
+            if on_retry is not None:
+                on_retry(delay)
+            time.sleep(delay)
         except TypeError as exc:
             # 真的沒有符合條件的航班時，Google 回傳的資料是空的（fast-flights 解析會丟 TypeError）。
             # 再試一次確認
             if empty_retried:
                 raise EmptyResult(f"empty result: {exc}") from exc
             empty_retried = True
+            if on_retry is not None:
+                on_retry(3)
             time.sleep(3)
 
 
