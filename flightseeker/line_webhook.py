@@ -6,6 +6,7 @@ import hmac
 import json
 import logging
 import os
+from time import perf_counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
@@ -162,13 +163,17 @@ def deliver_results(token, target, message):
         push(token, target, EXAMPLE if message.strip() == "查機票" else f"{exc}\n\n{EXAMPLE}")
         return
     try:
+        search_started = perf_counter()
         pages = list(flight_results(query))
     except Exception:
         logging.exception("Flight search unavailable")
         push(token, target, "暫時無法查詢機票，請稍後再試。")
         raise
+    print(f"Google Flights 查價與整理：{perf_counter() - search_started:.2f} 秒", flush=True)
+    push_started = perf_counter()
     for page in pages:
         push(token, target, page)
+    print(f"LINE 推播（{len(pages)} 則）：{perf_counter() - push_started:.2f} 秒", flush=True)
 
 
 def dispatch_workflow(token, repository, ref, target, message):
