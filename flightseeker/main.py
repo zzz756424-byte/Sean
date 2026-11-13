@@ -128,7 +128,7 @@ def run(root: Path, fetcher: Fetcher = google_fetcher, limit: int | None = None,
         with ThreadPoolExecutor(max_workers=workers) as executor:
             for start in range(0, len(todo), workers):
                 if start:
-            sleep(random.uniform(*settings.delay_seconds))
+                    sleep(random.uniform(*settings.delay_seconds))
                 batch = []
                 for combo in todo[start:start + workers]:
                     entry = dict(state.get(combo.key, {}))
