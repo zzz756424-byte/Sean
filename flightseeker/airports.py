@@ -23,6 +23,7 @@ AIRPORTS = {
     "新山": "JHB", "檳城": "PEN", "亞庇": "BKI", "古晉": "KCH", "蘭卡威": "LGK",
     "新加坡樟宜": "SIN", "樟宜": "SIN", "素萬那普": "BKK", "廊曼": "DMK",
     "清邁": "CNX", "普吉": "HKT", "峴港": "DAD", "河內": "HAN", "胡志明市": "SGN",
+    "富國島": "PQC", "富國": "PQC", "phu quoc": "PQC", "phú quốc": "PQC",
     "馬尼拉": "MNL", "宿霧": "CEB", "雅加達": "CGK", "峇里島": "DPS", "巴里島": "DPS",
     "北京": "PEK", "北京首都": "PEK", "北京大興": "PKX", "上海": "PVG",
     "上海浦東": "PVG", "上海虹橋": "SHA", "廣州": "CAN", "深圳": "SZX",
@@ -35,7 +36,7 @@ SIZE = {"large_airport": 3, "medium_airport": 2, "small_airport": 1}
 
 
 def place_key(value):
-    value = normalize("NFKC", value).translate(str.maketrans("臺覇国际场机绳冲", "台霸國際場機繩沖"))
+    value = normalize("NFKC", value).translate(str.maketrans("臺覇国际场机绳冲岛", "台霸國際場機繩沖島"))
     value = value.replace("空港", "機場")
     return " ".join(re.findall(r"[^\W_]+", value.casefold()))
 
