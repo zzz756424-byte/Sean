@@ -243,13 +243,13 @@ def main():
     with ThreadPoolExecutor(max_workers=3) as executor:
         pending = [executor.submit(fetch_hotel, search, key, context) for search in searches]
         for search, future in zip(searches, pending):
-        try:
+            try:
                 token, details = future.result()
                 if not report_search(search, token, details, history, now, alerts, line_alerts):
+                    all_found = False
+            except ValueError as exc:
+                print(f"{search.hotel or search.property_token}：{exc}")
                 all_found = False
-        except ValueError as exc:
-            print(f"{search.hotel or search.property_token}：{exc}")
-            all_found = False
     if history or history_path.exists():
         save_state(history_path, history)
     alerts_file = os.environ.get("HOTEL_ALERTS_FILE")
