@@ -5,7 +5,7 @@
   "destination": "OKA",
   "depart": "2027-03-20",
   "ret": "2027-03-26",
-  "checked_at": "2026-11-12T10:50:28+08:00",
+  "checked_at": "2026-11-13T14:29:06+08:00",
   "serpapi_cache": {
    "checked_at": "2026-11-12T10:50:28+08:00",
    "search_settings": [
@@ -237,9 +237,9 @@
    }
   },
   "status": "ok",
-  "fare": 12021,
+  "fare": 12011,
   "bag_add": 0,
-  "total": 12021,
+  "total": 12011,
   "airlines": [
    "STARLUX Airlines"
   ],
@@ -248,7 +248,7 @@
   "duration_min": 90,
   "url": "https://www.google.com/travel/flights/search?tfs=GhwSCjIwMjctMDMtMjAoAGoFEgNSTVFyBRIDT0tBGhwSCjIwMjctMDMtMjYoAGoFEgNPS0FyBRIDUk1RQgEBSAGIAQGYAQE=&hl=zh-TW&curr=TWD",
   "options": 1,
-  "direct_total": 12021,
+  "direct_total": 12011,
   "direct_airlines": [
    "STARLUX Airlines"
   ],
@@ -485,7 +485,7 @@
   "destination": "OKA",
   "depart": "2027-03-20",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T10:50:28+08:00",
+  "checked_at": "2026-11-13T14:29:06+08:00",
   "status": "none"
  },
  "RMQ-OKA|2027-03-21|2027-03-27|~0stop": {
@@ -494,7 +494,7 @@
   "destination": "OKA",
   "depart": "2027-03-21",
   "ret": "2027-03-27",
-  "checked_at": "2026-11-12T10:50:28+08:00",
+  "checked_at": "2026-11-13T14:29:06+08:00",
   "status": "none"
  }
 }
