@@ -62,10 +62,20 @@ def direct_flights(origin, dest, date):
     from fast_flights import FlightQuery
 
     leg = FlightQuery(date=date.isoformat(), from_airport=origin, to_airport=dest, max_stops=0)
+    started = perf_counter()
+    retry_wait = 0
+
+    def record_retry(delay):
+        nonlocal retry_wait
+        retry_wait += delay
+
     try:
-        results = google_results(google_query([leg], "one-way"))
+        results = google_results(google_query([leg], "one-way"), on_retry=record_retry)
     except EmptyResult:
         return {}
+    finally:
+        print(f"Google Flights {origin}→{dest} {date}："
+              f"{perf_counter() - started:.2f} 秒（重試等待 {retry_wait} 秒）", flush=True)
 
     flights = {}
     for flight in results:
@@ -97,7 +107,7 @@ def flight_results(queries):
     cache = {}
     failures = 0
     if legs:
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             pending = {executor.submit(direct_flights, *leg): leg for leg in legs}
             for future in as_completed(pending):
                 leg = pending[future]
